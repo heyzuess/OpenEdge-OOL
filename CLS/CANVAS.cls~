@@ -1,0 +1,569 @@
+&SCOPED-DEFINE SYS_STEP 8
+&SCOPED-DEFINE CRM_LAST "LAST-POS"
+USING Progress.Lang.*.
+CLASS CANVAS:
+    /* Current Frame Handle */
+    DEFINE PUBLIC  PROPERTY h_currF  AS HANDLE  GET. PUBLIC  SET.
+    
+    /* Temp Handle */
+    DEFINE PRIVATE VARIABLE h_tempTile   AS HANDLE    NO-UNDO.
+    /* Current Window Content Handle */
+    DEFINE PRIVATE VARIABLE w_window     AS WINPROC   NO-UNDO.
+    /* Current Actor Handle */
+    DEFINE PRIVATE VARIABLE a_currActor  AS ACTOR     NO-UNDO.
+    /* Bitmap to paint */
+    DEFINE PRIVATE VARIABLE c_bitMap     AS CHARACTER NO-UNDO.
+    /* Tile Char - Will hold our character to paint */
+    DEFINE PRIVATE VARIABLE c_char       AS CHARACTER NO-UNDO.
+    /* Temp list for object collision */    
+    DEFINE PRIVATE VARIABLE c_tempList   AS CHARACTER NO-UNDO.
+    /* Temp variable for last col val */
+    DEFINE PRIVATE VARIABLE c_colval     AS CHARACTER NO-UNDO.
+    /* Current Bit Value */
+    DEFINE PRIVATE VARIABLE i_currBit    AS INTEGER   NO-UNDO.
+    /* Current X Pos */
+    DEFINE PRIVATE VARIABLE i_xPos       AS INTEGER   NO-UNDO.
+    /* Current Y Pos */
+    DEFINE PRIVATE VARIABLE i_yPos       AS INTEGER   NO-UNDO.
+    /* Current Col Val */
+    DEFINE PRIVATE VARIABLE i_currCol    AS INTEGER   NO-UNDO.
+    /* Current Mod Val */
+    DEFINE PRIVATE VARIABLE i_mod        AS INTEGER   NO-UNDO.
+    /* Grid Size = Product of Width and Height */
+    DEFINE PRIVATE VARIABLE i_gSize      AS INTEGER   NO-UNDO.
+    /* The X - Coordinate of the Grid */
+    DEFINE PRIVATE VARIABLE i_x          AS INTEGER   NO-UNDO.
+    /* The Y - Coordinate of the Grid */
+    DEFINE PRIVATE VARIABLE i_y          AS INTEGER   NO-UNDO.
+    /* Product of X - Coordinate and Tile Size */
+    DEFINE PRIVATE VARIABLE i_xT         AS INTEGER   NO-UNDO.
+    /* Product of Y - Coordinate and Tile Size */
+    DEFINE PRIVATE VARIABLE i_yT         AS INTEGER   NO-UNDO.
+    /* Our loop counter variable */
+    DEFINE PRIVATE VARIABLE i_int        AS INTEGER   NO-UNDO.
+    /* Our last actors X pos */
+    DEFINE PRIVATE VARIABLE i_lX         AS INTEGER   NO-UNDO.
+    /* Our last actors Y pos */
+    DEFINE PRIVATE VARIABLE i_lY         AS INTEGER   NO-UNDO.
+    /* Our Tile Counter */
+    DEFINE PRIVATE VARIABLE i_tile       AS INTEGER   NO-UNDO.
+    /* Temp variable for sprite count */
+    DEFINE PRIVATE VARIABLE i_sprite     AS INTEGER   NO-UNDO.
+    /* Logical flag for frame rendering */
+    DEFINE PRIVATE VARIABLE l_renderCurr AS LOGICAL   NO-UNDO.
+    /* Logical flag for collison detection */
+    DEFINE PRIVATE VARIABLE l_isVal      AS LOGICAL   NO-UNDO.
+
+    /* Map of text objects in frame */
+    DEFINE TEMP-TABLE spriteMap
+        FIELD c_name     AS CHARACTER
+        FIELD c_val      AS CHARACTER
+        FIELD h_val      AS HANDLE
+        FIELD h_buff     AS HANDLE
+        FIELD i_x        AS INTEGER
+        FIELD i_y        AS INTEGER
+        FIELD i_idx      AS INTEGER.
+
+    /* Table for our animations */
+    DEFINE TEMP-TABLE animation
+        FIELD c_name     AS CHARACTER
+        FIELD c_colList  AS CHARACTER
+        FIELD i_numframe AS INTEGER
+        FIELD i_curframe AS INTEGER.
+    
+    /* Table for our animation sprites */
+    DEFINE TEMP-TABLE sprite
+        FIELD c_name     AS CHARACTER
+        FIELD c_map      AS CHARACTER
+        FIELD i_idx      AS INTEGER
+        FIELD i_w        AS INTEGER
+        FIELD i_h        AS INTEGER
+        FIELD i_x        AS INTEGER
+        FIELD i_y        AS INTEGER.
+    
+    /* Temp table for our actor crumbs */
+    DEFINE TEMP-TABLE actorCrumb
+        FIELD h_actor    AS HANDLE
+        FIELD c_type     AS CHARACTER
+        FIELD c_param    AS CHARACTER.
+
+    /* Regular Constructor */
+    CONSTRUCTOR CANVAS():
+        w_window = NEW WINPROC().
+    END CONSTRUCTOR.
+    
+    /* Overloaded Constructor */
+    CONSTRUCTOR CANVAS(INPUT wip_winproc AS CLASS OBJECT):
+        w_window = CAST(wip_winproc,WINPROC).
+    END CONSTRUCTOR.
+    
+    DESTRUCTOR CANVAS():
+    END DESTRUCTOR.
+    
+    /* Create bitmap from sprite grid */
+    METHOD PUBLIC LOG setBuffer(INPUT hip_handle AS HANDLE):
+        /*HIDE ALL.*/
+        ASSIGN h_currF = hip_handle.
+        RETURN h_currF = hip_handle.
+    END METHOD.
+    
+    /* Create sprite map grid */
+    METHOD PUBLIC LOG spriteMap(INPUT cip_val  AS LONGCHAR,
+                                INPUT cip_name AS CHARACTER,
+                                INPUT cip_colL AS CHARACTER,
+                                INPUT iip_w    AS INTEGER,
+                                INPUT iip_h    AS INTEGER,
+                                INPUT iip_num  AS INTEGER):
+        ASSIGN i_currBit = 0
+               i_xPos    = 0
+               i_yPos    = 0.
+    
+        FIND FIRST animation
+             WHERE animation.c_name = cip_name
+             NO-LOCK NO-ERROR.
+        IF AVAILABLE animation   THEN RETURN FALSE.
+    
+        FIND FIRST sprite
+             WHERE sprite.c_name = cip_name
+             NO-LOCK NO-ERROR.
+        IF AVAILABLE sprite THEN RETURN FALSE.
+    
+        ASSIGN i_xPos = 1
+               i_yPos = 1.
+           
+        CREATE animation.
+        ASSIGN animation.c_name     = cip_name
+               animation.c_colList  = cip_colL
+               animation.i_numframe = iip_num
+               animation.i_curframe = 1.
+    
+        DO i_currbit = 1 TO iip_num:
+            CREATE sprite.
+            ASSIGN sprite.c_name = cip_name
+                   sprite.i_idx  = i_currbit
+                   sprite.i_w    = iip_w
+                   sprite.i_h    = iip_h
+                   sprite.i_x    = i_xPos
+                   sprite.i_y    = i_yPos.
+                   
+            sprite.c_map = setBitMap(cip_val,
+                                        sprite.i_w,
+                                        sprite.i_h,
+                                        sprite.i_x,
+                                        sprite.i_y).
+                                          
+            IF sprite.c_map = "" THEN DELETE sprite.
+                                           
+            ASSIGN i_xPos = i_xPos + iip_w.
+        END.
+    
+        ASSIGN i_currbit = 0.
+        FOR EACH  sprite
+            WHERE sprite.c_name = cip_name:
+            ASSIGN i_currbit = i_currbit + 1.
+        END.
+        
+        RETURN i_currbit = iip_num.        
+    END METHOD.
+    
+    /* Create bitmap from sprite grid */
+    METHOD PUBLIC CHAR setBitMap(INPUT cip_map   AS LONGCHAR,
+                                 INPUT iip_w     AS INTEGER,
+                                 INPUT iip_h     AS INTEGER,
+                                 INPUT iip_x     AS INTEGER,
+                                 INPUT iip_y     AS INTEGER):
+        ASSIGN c_bitMap  = ""
+               i_currCol = 0
+               i_mod     = 0.
+                                      
+        IF LENGTH(ENTRY(1,cip_map)) < iip_w THEN RETURN c_bitMap.
+        IF LENGTH(ENTRY(1,cip_map)) < iip_x THEN RETURN c_bitMap.
+        IF NUM-ENTRIES(cip_map)     < iip_h THEN RETURN c_bitMap.
+        IF NUM-ENTRIES(cip_map)     < iip_y THEN RETURN c_bitMap.
+        IF iip_x <= 0 THEN RETURN c_bitMap.
+        IF iip_y <= 0 THEN RETURN c_bitMap.
+        
+        ASSIGN i_mod = iip_y - 1
+               iip_h = iip_h + i_mod.
+    
+        DO i_currCol = iip_y TO iip_h:
+            ASSIGN c_bitMap = c_bitMap + SUBSTRING(ENTRY(i_currCol,cip_map),iip_x,iip_w) + ",".
+            //MESSAGE i_currCol ENTRY(i_currCol - i_mod,c_bitMap).
+        END.
+        ASSIGN c_bitMap = SUBSTRING(c_bitMap,1,LENGTH(c_bitMap) - 1).
+        RETURN c_bitMap.    
+    END METHOD.
+    
+    /* Paint actor to screen and check collision */
+    METHOD PUBLIC LOG setActor(INPUT aip_actor   AS CLASS OBJECT,
+                               INPUT cip_colList AS CHARACTER):
+        /* Cast actor object to handle */
+        ASSIGN a_currActor = CAST(aip_actor,ACTOR).
+        
+        /* Make actor crumb if not available */
+        makeActorCrumb(a_currActor:h_handle,{&CRM_LAST},"0,0").
+        
+        /* Get actor crumb information */
+        getActorCrumb(a_currActor:h_handle,{&CRM_LAST}).
+        
+        /* Clear actor on screen */
+        IF valTile(h_currF,a_currActor:h_handle:SCREEN-VALUE,i_lX,i_lY) THEN
+            rmvTile(h_currF,"",i_lX,i_lY).
+        
+        /* Check Collision */
+        IF valTile(h_currF,cip_colList,a_currActor:h_handle:X,a_currActor:h_handle:Y) THEN
+        DO:
+            ASSIGN a_currActor:l_col    = TRUE
+                   a_currActor:c_colval = c_colval.
+        END.
+        ELSE HIDE MESSAGE.
+        
+        /* Paint main actor to canvas */
+        setTile(h_currF,a_currActor:h_handle:SCREEN-VALUE,a_currActor:h_handle:X,a_currActor:h_handle:Y).
+        ASSIGN i_lX = a_currActor:h_handle:X
+               i_lY = a_currActor:h_handle:Y.
+               
+        /* Update actor crumb */
+        setActorCrumb(a_currActor:h_handle,{&CRM_LAST},SUBSTITUTE("&1,&2",i_lX,i_lY)).
+        
+        RETURN TRUE.
+    END METHOD.
+    
+    /* Paint bitmap to frame with varying size and position on grid */
+    METHOD PUBLIC LOG renderBuff(INPUT hip_frame AS HANDLE,
+                                 INPUT cip_map   AS CHARACTER,
+                                 INPUT iip_w     AS INTEGER,
+                                 INPUT iip_h     AS INTEGER,
+                                 INPUT iip_x     AS INTEGER,
+                                 INPUT iip_y     AS INTEGER):
+        ASSIGN c_char  = ""
+               i_gSize = 0
+               i_x     = 0
+               i_y     = 0
+               i_xT    = 0
+               i_yT    = 0
+               i_int   = 0.
+    
+        /* Set our frame for painting */
+        IF NOT setBuffer(hip_frame) THEN RETURN FALSE.
+        /* Check our input map is not blank */
+        IF TRIM(cip_map) = ""         THEN RETURN FALSE.
+    
+        /* Converting these to grid values */
+        ASSIGN iip_x = iip_x * {&SYS_STEP}
+               iip_y = iip_y * {&SYS_STEP}.
+    
+        /* Loop from zero to the Grid Size minus one. Reason for substracting one from
+           Grid Size is that Progress can paint a character on screen at coordinate 0, 0
+           in CUI. Which means naturally that the max X, Y coordinate will have to be a 
+           null value or oustide the scope of our grid. */
+        ASSIGN i_gSize = iip_w * iip_h.
+
+        DO i_int = 0 TO i_gSize - 1:
+            /* Assign our X - Coordinate */
+            i_x  = i_int MODULO iip_w.
+            /* Assign our Y - Coordinate */
+            i_y  = castNum(i_int / iip_w).
+            /* Set Current Char */
+            c_char = SUBSTRING(ENTRY(i_y + 1,cip_map),i_x + 1,1).
+            /* Convert X Coordinate into a Grid Value */
+            i_xT = (i_x * {&SYS_STEP}) + iip_x.
+            /* Convert Y Coordinate into a Grid Value */
+            i_yT = (i_y * {&SYS_STEP}) + iip_y.
+        
+            /* Paint the Tile Coordinate */
+            setTile(hip_frame,c_char,i_xT,i_yT).
+            /* Our coordinate log */
+            //MESSAGE i_int i_x i_y i_xT i_yT i_gSize.
+        END.
+        
+        /*------------------------------------------
+           Removed for now since not sure if needed
+        --------------------------------------------
+        /* Show our frame */
+        VIEW h_currF.
+        ------------------------------------------*/
+        
+        /* Output our map table
+        FOR EACH spriteMap:
+            DISPLAY spriteMap EXCEPT spriteMap.h_val WITH FRAME A DOWN.
+        END.   */
+        
+        RETURN TRUE.    
+    END METHOD.
+    
+    /* Cast a decimal value to integer properly. Progress rounds decimal
+       value up to whole value (i.e. .5 is rounded to 1 when cast). */
+    METHOD PRIVATE INTEGER castNum(INPUT dip_decimal AS DECIMAL):
+        RETURN INTEGER(ENTRY(1,STRING(dip_decimal),".")).    
+    END METHOD.
+    
+    /* Paint Tile to Coordinate */
+    METHOD PUBLIC LOG setTile(INPUT hip_parent  AS HANDLE,
+                              INPUT cip_val     AS CHARACTER,
+                              INPUT iip_x       AS INTEGER,
+                              INPUT iip_y       AS INTEGER):
+        ASSIGN h_tempTile = ?
+               h_tempTile = makeTile(hip_parent,cip_val,iip_x,iip_y).
+               h_tempTile:SCREEN-VALUE = cip_val.
+        
+        FOR FIRST spriteMap
+            WHERE spriteMap.h_buff = hip_parent
+            AND   spriteMap.i_x    = iip_x
+            AND   spriteMap.i_y    = iip_y
+            NO-LOCK:
+            ASSIGN spriteMap.c_val = cip_val.
+        END.
+        
+        RETURN h_tempTile:SCREEN-VALUE = cip_val.
+    END METHOD.
+    
+    /* Create Tile Coordinate if one does not currently exist in frame */
+    METHOD PUBLIC HANDLE makeTile(INPUT hip_parent  AS HANDLE,
+                                  INPUT cip_val     AS CHARACTER,
+                                  INPUT iip_x       AS INTEGER,
+                                  INPUT iip_y       AS INTEGER):
+        
+        ASSIGN h_tempTile = ?
+               h_tempTile = getTile(hip_parent,iip_x,iip_y).
+               
+        IF NOT VALID-HANDLE(h_tempTile) THEN
+        DO:
+            CREATE spriteMap.
+            ASSIGN i_tile        = i_tile + 1
+                   spriteMap.c_val  = cip_val
+                   spriteMap.i_x    = iip_x
+                   spriteMap.i_y    = iip_y
+                   spriteMap.i_idx  = i_tile
+                   spriteMap.c_name = SUBSTITUTE("T&1",spriteMap.i_idx)
+                   spriteMap.h_buff = hip_parent
+                   spriteMap.h_val  = w_window:createText(spriteMap.c_name,
+                                                           cip_val,
+                                                       "X~(1~)",
+                                                       iip_x,
+                                                       iip_y,
+                                                       hip_parent)
+                   h_tempTile  = spriteMap.h_val.
+        END.
+        RETURN h_tempTile.
+    END METHOD.
+    
+    /* Retrieve Tile Handle */
+    METHOD PUBLIC HANDLE getTile(INPUT hip_parent  AS HANDLE,
+                                 INPUT iip_x       AS INTEGER,
+                                 INPUT iip_y       AS INTEGER):
+        ASSIGN h_tempTile = ?.
+    
+        FIND FIRST spriteMap
+             WHERE spriteMap.h_buff = hip_parent
+             AND   spriteMap.i_x    = iip_x
+             AND   spriteMap.i_y    = iip_y
+             NO-LOCK NO-ERROR.
+        IF AVAILABLE spriteMap THEN ASSIGN h_tempTile = spriteMap.h_val.
+        
+        RETURN h_tempTile.
+    END METHOD.
+    
+    /* Check Actor State */
+    METHOD PUBLIC LOG renderFrame(INPUT cip_name AS CHARACTER,
+                                  INPUT iip_x    AS INTEGER,
+                                  INPUT iip_y    AS INTEGER):
+        
+        ASSIGN l_renderCurr = FALSE.
+    
+        FIND FIRST animation
+             WHERE animation.c_name = cip_name
+             NO-LOCK NO-ERROR.
+        IF NOT AVAILABLE animation THEN RETURN FALSE.
+    
+        l_renderCurr = setCurrFrame(animation.c_name,animation.i_curframe,iip_x,iip_y).
+    
+        ASSIGN animation.i_curframe = IF animation.i_curframe >= animation.i_numframe THEN
+                                        1
+                                    ELSE
+                                        animation.i_curframe + 1.
+        for each spritemap:
+            display spritemap except h_buff h_val
+            with 3 col frame asdfasdf.
+            pause.
+        end.
+
+        RETURN l_renderCurr.
+    END METHOD.
+    
+    /* Paint current frame */
+    METHOD PUBLIC LOG setCurrFrame(INPUT cip_name AS CHARACTER,
+                                   INPUT iip_idx  AS INTEGER,
+                                   INPUT iip_x    AS INTEGER,
+                                   INPUT iip_y    AS INTEGER):
+        FIND FIRST sprite
+             WHERE sprite.c_name = cip_name
+             AND   sprite.i_idx  = iip_idx
+             NO-LOCK NO-ERROR.
+        IF NOT AVAILABLE sprite THEN RETURN FALSE.
+    
+        RETURN renderBuff(h_currF,
+                          sprite.c_map,
+                          sprite.i_w,
+                          sprite.i_h,
+                          iip_x,
+                          iip_y).
+    END METHOD.
+    
+    /* Checks collision on tile coordinate */
+    METHOD PUBLIC LOG valTile(INPUT hip_handle  AS HANDLE,
+                              INPUT cip_val     AS CHARACTER,
+                              INPUT iip_x       AS INTEGER,
+                              INPUT iip_y       AS INTEGER):
+        ASSIGN c_tempList = ""
+               c_colval   = ""
+               l_isVal    = FALSE.
+    
+        IF NUM-ENTRIES(cip_val) > 1 THEN
+            ASSIGN c_tempList = cip_val.
+    
+        FIND FIRST spriteMap
+             WHERE spriteMap.h_buff = hip_handle
+             AND   spriteMap.i_x    = iip_x
+             AND   spriteMap.i_y    = iip_y
+             NO-LOCK NO-ERROR.
+        IF NOT AVAILABLE spriteMap THEN RETURN FALSE.
+    
+        FOR EACH  spriteMap
+            WHERE spriteMap.h_buff = hip_handle
+            AND   spriteMap.i_x    = iip_x
+            AND   spriteMap.i_y    = iip_y
+            NO-LOCK:
+            /*
+            DISPLAY spriteMap EXCEPT spriteMap.h_buff spriteMap.h_val 
+            WITH 3 COL FRAME ASDFASDF.
+            PAUSE.*/
+                
+            IF l_isVal = FALSE THEN
+            DO:
+                IF c_tempList <> "" THEN
+                DO:
+                    ASSIGN l_isVal  = LOGICAL(LOOKUP(spriteMap.c_val,c_tempList)).
+                    IF l_isVal THEN ASSIGN c_colval = ENTRY(LOOKUP(spriteMap.c_val,c_tempList),c_tempList).
+                END.
+                ELSE
+                DO:
+                    ASSIGN l_isVal = spriteMap.c_val = cip_val.
+                    IF l_isVal THEN ASSIGN c_colval = cip_val.
+                END.
+            END.
+        END.
+    
+        RETURN l_isVal.
+    END METHOD.
+    
+    /* Repaint tile coordinate */
+    METHOD PUBLIC LOG rmvTile(INPUT hip_handle  AS HANDLE,
+                              INPUT cip_val     AS CHARACTER,
+                              INPUT iip_x       AS INTEGER,
+                              INPUT iip_y       AS INTEGER):
+        ASSIGN h_tempTile = ?
+               h_tempTile = getTile(hip_handle,iip_x,iip_y).
+        
+        IF NOT VALID-HANDLE(h_tempTile)      THEN RETURN TRUE.
+        IF h_tempTile:SCREEN-VALUE = cip_val THEN RETURN TRUE.
+        
+        ASSIGN h_tempTile:SCREEN-VALUE = cip_val.
+        RETURN h_tempTile:SCREEN-VALUE = cip_val.
+    END METHOD.
+    
+    /* Find actor crumb and set temp variables */
+    METHOD PUBLIC LOG getActorCrumb(INPUT hip_handle AS HANDLE,
+                                    INPUT cip_type   AS CHARACTER):
+        FIND FIRST actorCrumb
+             WHERE actorCrumb.h_actor = hip_handle
+             AND   actorCrumb.c_type  = cip_type
+             NO-LOCK NO-ERROR.
+        IF NOT AVAILABLE actorCrumb THEN RETURN FALSE.
+        
+        CASE cip_type:
+            WHEN "LAST-POS" THEN
+            DO:
+                ASSIGN i_lX = INTEGER(ENTRY(1,actorCrumb.c_param))
+                       i_lY = INTEGER(ENTRY(2,actorCrumb.c_param))
+                NO-ERROR.
+                RETURN TRUE.
+            END.
+            OTHERWISE RETURN FALSE.
+        END CASE.
+    END METHOD.
+    
+    /* Make actor crumb for temp variables */
+    METHOD PUBLIC LOG makeActorCrumb(INPUT hip_handle AS HANDLE,
+                                     INPUT cip_type   AS CHARACTER,
+                                     INPUT cip_param  AS CHARACTER):
+        FIND FIRST actorCrumb
+             WHERE actorCrumb.h_actor = hip_handle
+             AND   actorCrumb.c_type  = cip_type
+             NO-LOCK NO-ERROR.
+        IF AVAILABLE actorCrumb THEN RETURN FALSE.
+        	
+        CREATE actorCrumb.
+        ASSIGN actorCrumb.h_actor = hip_handle
+               actorCrumb.c_type  = cip_type
+               actorCrumb.c_param = cip_param.
+        
+        RETURN TRUE.
+    END METHOD.
+    
+    /* Make actor crumb for temp variables */
+    METHOD PUBLIC LOG setActorCrumb(INPUT hip_handle AS HANDLE,
+                                    INPUT cip_type   AS CHARACTER,
+                                    INPUT cip_param  AS CHARACTER):
+        FIND FIRST actorCrumb
+             WHERE actorCrumb.h_actor = hip_handle
+             AND   actorCrumb.c_type  = cip_type
+             NO-LOCK NO-ERROR.
+        IF NOT AVAILABLE actorCrumb THEN RETURN FALSE.
+        	
+        ASSIGN actorCrumb.c_param = cip_param.
+        RETURN actorCrumb.c_param = cip_param.
+    END METHOD.
+    
+    /* Get collision value list */
+    METHOD PUBLIC CHAR getColList(INPUT cip_name AS CHARACTER):
+        FIND FIRST animation
+             WHERE animation.c_name = cip_name
+             NO-LOCK NO-ERROR.
+        IF NOT AVAILABLE animation THEN RETURN "".
+    
+        RETURN animation.c_colList.
+    END METHOD.
+    
+    /* Get Sprite Count */
+    METHOD PUBLIC INT getSpriteC(INPUT cip_name AS CHARACTER):
+        ASSIGN i_sprite = 0.
+    
+        FOR EACH  sprite
+            WHERE sprite.c_name = cip_name:
+            ASSIGN i_sprite = i_sprite + 1.
+        END.
+    
+        RETURN i_sprite.
+    END METHOD.
+    
+    /* Delete a tile from memory in sprite */
+    METHOD PUBLIC LOG delTile(INPUT hip_handle  AS HANDLE,
+                              INPUT cip_val     AS CHARACTER,
+                              INPUT iip_x       AS INTEGER,
+                              INPUT iip_y       AS INTEGER):
+        DEFINE VARIABLE fhv_tempTile AS HANDLE NO-UNDO.
+    
+        FIND FIRST spriteMap
+             WHERE spriteMap.h_buff = hip_handle
+             AND   spriteMap.i_x    = iip_x
+             AND   spriteMap.i_y    = iip_y
+             NO-LOCK NO-ERROR.
+        IF AVAILABLE spriteMap THEN
+        DO:
+            IF NOT w_window:remWinObj(spriteMap.c_name,"TEXT") THEN RETURN FALSE.
+            DELETE spriteMap.
+        END.
+        RETURN AVAILABLE spriteMap.
+    END METHOD.
+END CLASS.
