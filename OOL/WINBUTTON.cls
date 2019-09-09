@@ -1,9 +1,10 @@
 USING OOL.*.
 CLASS OOL.WINBUTTON INHERITS OOL.WINOBJ:
+
     DEFINE PUBLIC PROPERTY LABEL AS CHARACTER GET.
     PUBLIC SET (cip_label AS CHARACTER):
         ASSIGN THIS-OBJECT:LABEL = cip_label.
-
+    
         IF THIS-OBJECT:LIVE THEN
         DO:
             ASSIGN THIS-OBJECT:HANDLE:LABEL = THIS-OBJECT:LABEL.
@@ -16,7 +17,7 @@ CLASS OOL.WINBUTTON INHERITS OOL.WINOBJ:
 
         IF THIS-OBJECT:LIVE THEN
         DO:
-            ASSIGN THIS-OBJECT:WIDTH-CHARS = THIS-OBJECT:WIDTH.
+            ASSIGN THIS-OBJECT:HANDLE:WIDTH-CHARS = THIS-OBJECT:WIDTH.
         END.
     END SET.
 
@@ -35,6 +36,42 @@ CLASS OOL.WINBUTTON INHERITS OOL.WINOBJ:
     DEFINE PRIVATE VARIABLE a_tempData AS ARRAY.
 
     CONSTRUCTOR WINBUTTON ():
+        SUPER().
+
+    END CONSTRUCTOR.
+
+    CONSTRUCTOR WINBUTTON (INPUT oip_parent AS WINOBJ, 
+                           INPUT cip_label  AS CHARACTER,
+                           INPUT iip_x      AS INTEGER,
+                           INPUT iip_y      AS INTEGER):
+        SUPER().
+
+        ASSIGN THIS-OBJECT:PARENT = oip_parent
+               THIS-OBJECT:LABEL  = cip_label
+               THIS-OBJECT:WIDTH  = LENGTH(cip_label) + 2
+               THIS-OBJECT:HEIGHT = 1
+               THIS-OBJECT:X      = MAX(iip_x, 1)
+               THIS-OBJECT:Y      = MAX(iip_y, 1).
+
+        THIS-OBJECT:REGISTER().
+    END CONSTRUCTOR.
+
+    CONSTRUCTOR WINBUTTON (INPUT oip_parent AS WINOBJ,
+                           INPUT cip_label  AS CHARACTER,
+                           INPUT iip_w      AS INTEGER,
+                           INPUT iip_h      AS INTEGER,
+                           INPUT iip_x      AS INTEGER,
+                           INPUT iip_y      AS INTEGER):
+        SUPER().
+
+        ASSIGN THIS-OBJECT:PARENT = oip_parent
+               THIS-OBJECT:LABEL  = cip_label
+               THIS-OBJECT:WIDTH  = iip_w
+               THIS-OBJECT:HEIGHT = iip_h
+               THIS-OBJECT:X      = MAX(iip_x, 1)
+               THIS-OBJECT:Y      = MAX(iip_y, 1).
+
+        THIS-OBJECT:REGISTER().
     END CONSTRUCTOR.
 
     DESTRUCTOR WINBUTTON ():
@@ -55,7 +92,7 @@ CLASS OOL.WINBUTTON INHERITS OOL.WINOBJ:
         THIS-OBJECT:WAIT().
 
         a_tempData = NEW ARRAY().
-        a_tempData:PUSH-BACK(THIS-OBJECT:LAST-KEY).
+        a_tempData:PUSH-BACK(THIS-OBJECT:NAME, THIS-OBJECT:LAST-KEY).
         THIS-OBJECT:FOCUS-OFF:PUBLISH(a_tempData).
 
         IF NOT THIS-OBJECT:SENSITIVE THEN
@@ -69,7 +106,7 @@ CLASS OOL.WINBUTTON INHERITS OOL.WINOBJ:
 
     METHOD PUBLIC OVERRIDE VOID WAIT ():
         /* THIS-OBJECT:HANDLE causes an issue here for some reason */
-        WAIT-FOR "GO","PF1","F1","TAB","ENTER","RETURN" OF HANDLE FOCUS HANDLE.
+        WAIT-FOR "ANY-KEY" OF HANDLE FOCUS HANDLE.
         ASSIGN THIS-OBJECT:LAST-KEY = IF LASTKEY = 32 THEN "SPACEBAR" ELSE KEYLABEL(LASTKEY).
     END METHOD.
 

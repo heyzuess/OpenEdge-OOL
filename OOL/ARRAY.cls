@@ -235,7 +235,6 @@ CLASS OOL.ARRAY:
     METHOD PRIVATE CHARACTER INDEX-VAL (INPUT iip_idx AS INTEGER):
         FOR FIRST arraySet
             WHERE arraySet.i_idx = iip_idx:
-            
             RETURN arraySet.c_val.
         END.
         RETURN "".
@@ -247,6 +246,22 @@ CLASS OOL.ARRAY:
             RETURN arraySet.c_val.
         END.
         RETURN "".
+    END METHOD.
+
+    METHOD PUBLIC CHARACTER INDEX-KEY (INPUT iip_idx AS INTEGER):
+        FOR FIRST arraySet
+            WHERE arraySet.i_idx = iip_idx:
+            RETURN arraySet.c_key.
+        END.
+        RETURN "".
+    END METHOD.
+
+    METHOD PUBLIC INTEGER INDEX-ROW (INPUT cip_key AS CHARACTER):
+        FOR FIRST arraySet
+            WHERE arraySet.c_key = cip_key:
+            RETURN arraySet.i_idx.
+        END.
+        RETURN ?.
     END METHOD.
 
     METHOD PUBLIC CHARACTER INDEX-CHAR (INPUT iip_idx AS INTEGER):
