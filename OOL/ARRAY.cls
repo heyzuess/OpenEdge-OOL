@@ -6,7 +6,8 @@ CLASS OOL.ARRAY:
         ASSIGN THIS-OBJECT:LENGTH = iip_length
                THIS-OBJECT:THIS   = THIS-OBJECT:LENGTH.
     END SET.
-    
+
+    DEFINE PUBLIC PROPERTY BREAK  AS LOGICAL GET. PRIVATE SET.
     DEFINE PUBLIC PROPERTY THIS   AS INTEGER GET. PRIVATE SET.
 
     DEFINE PRIVATE VARIABLE lc_long AS LONGCHAR.
@@ -23,7 +24,7 @@ CLASS OOL.ARRAY:
         FIELD c_clob   AS CLOB
         FIELD o_object AS OBJECT.
 
-    DEFINE PUBLIC EVENT FOR-EACH SIGNATURE VOID ().
+    DEFINE PUBLIC EVENT FOR-EACH SIGNATURE VOID (INPUT aip_array AS ARRAY).
 
     CONSTRUCTOR ARRAY ():
         SUPER().
@@ -33,12 +34,23 @@ CLASS OOL.ARRAY:
     END DESTRUCTOR.
 
     METHOD PUBLIC VOID FOR-EACH ():
+        FOR-EACH:
         FOR EACH arraySet
             BY   arraySet.i_idx:
             
             THIS-OBJECT:THIS = arraySet.i_idx.
-            THIS-OBJECT:FOR-EACH:PUBLISH().
+            THIS-OBJECT:FOR-EACH:PUBLISH(THIS-OBJECT).
+
+            IF THIS-OBJECT:BREAK THEN
+            DO:
+                ASSIGN THIS-OBJECT:BREAK = FALSE.
+                LEAVE FOR-EACH.
+            END.
         END.
+    END METHOD.
+
+    METHOD PUBLIC VOID BREAK ():
+        ASSIGN THIS-OBJECT:BREAK = TRUE.
     END METHOD.
 
     METHOD PRIVATE VOID ADD-SET(INPUT cip_val  AS CHARACTER,
@@ -153,6 +165,15 @@ CLASS OOL.ARRAY:
                arrayComplex.c_type = "LONGCHAR".
 
         COPY-LOB lcip_val TO arrayComplex.c_clob.
+    END METHOD.
+
+    METHOD PUBLIC VOID PUSH-BACK (INPUT aip_array AS ARRAY):
+        THIS-OBJECT:ADD-SET("", "COMPLEX").
+
+        CREATE arrayComplex.
+        ASSIGN arrayComplex.i_idx    = THIS-OBJECT:LENGTH
+               arrayComplex.c_type   = "ARRAY"
+               arrayComplex.o_object = CAST(aip_array, OBJECT).
     END METHOD.
 
     METHOD PRIVATE VOID DEL-SET (BUFFER x FOR arraySet):
@@ -364,5 +385,20 @@ CLASS OOL.ARRAY:
             COPY-LOB FROM arrayComplex.c_clob TO lc_long.
         END.
         RETURN lc_long.
+    END METHOD.
+
+    METHOD PUBLIC ARRAY INDEX-ARRAY (INPUT iip_idx AS INTEGER):
+        FOR FIRST arraySet
+            WHERE arraySet.i_idx  = iip_idx
+            AND   arraySet.c_type = "COMPLEX":
+        END.
+        IF NOT AVAILABLE arraySet THEN RETURN ?.
+
+        FOR FIRST arrayComplex
+            WHERE arrayComplex.i_idx = arraySet.i_idx:
+            
+            RETURN CAST(arrayComplex.o_object, ARRAY).
+        END.
+        RETURN ?.
     END METHOD.
 END CLASS.
