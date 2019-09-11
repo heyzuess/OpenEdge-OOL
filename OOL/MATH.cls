@@ -1,6 +1,5 @@
 USING OOL.*.
 CLASS OOL.MATH:
-    DEFINE PRIVATE VARIABLE a_temp AS ARRAY.
     DEFINE PRIVATE VARIABLE c_char AS CHARACTER.
     DEFINE PRIVATE VARIABLE i_int  AS INTEGER.
     DEFINE PRIVATE VARIABLE d_sum  AS DECIMAL.
@@ -29,12 +28,11 @@ CLASS OOL.MATH:
         ASSIGN d_sum = 0.
         IF NOT VALID-OBJECT(aip_array) THEN RETURN 0.
 
-        a_temp = aip_array.
-        a_temp:FOR-EACH:SUBSCRIBE(AVERAGE_ARRAY).
-        a_temp:FOR-EACH().
-        a_temp:FOR-EACH:UNSUBSCRIBE(AVERAGE_ARRAY).
+        aip_array:FOR-EACH:SUBSCRIBE(AVERAGE_ARRAY).
+        aip_array:FOR-EACH().
+        aip_array:FOR-EACH:UNSUBSCRIBE(AVERAGE_ARRAY).
 
-        ASSIGN d_sum = d_sum / a_temp:LENGTH.
+        ASSIGN d_sum = d_sum / aip_array:LENGTH.
 
         RETURN d_sum.
     END METHOD.
@@ -54,7 +52,7 @@ CLASS OOL.MATH:
         RETURN d_sum.
     END METHOD.
 
-    METHOD PRIVATE VOID AVERAGE_ARRAY ():
-        ASSIGN d_sum = d_sum + a_temp:INDEX-INT(a_temp:THIS).
+    METHOD PRIVATE VOID AVERAGE_ARRAY (INPUT aip_data AS ARRAY):
+        ASSIGN d_sum = d_sum + aip_data:INDEX-DEC(aip_data:THIS).
     END METHOD.
 END CLASS.
