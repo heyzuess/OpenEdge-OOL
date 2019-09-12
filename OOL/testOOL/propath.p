@@ -3,7 +3,7 @@ DEFINE VARIABLE c_temp    AS CHARACTER.
 DEFINE VARIABLE i_int     AS INTEGER.
 
 ASSIGN c_propath = 
-"C:\OpenEdge\WRK\testOOL" + "," +
+"C:\OpenEdge\WRK\OOL\testOOL" + "," +
 "".
 
 DO i_int = 1 TO NUM-ENTRIES(c_propath):

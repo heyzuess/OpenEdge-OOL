@@ -6,6 +6,8 @@ CLASS OOL.WINOBJ ABSTRACT:
     DEFINE PUBLIC    PROPERTY CURRENT-CHILD AS INTEGER   GET. PROTECTED SET.
     DEFINE PUBLIC    PROPERTY LIVE          AS LOGICAL   GET. PROTECTED SET.
     DEFINE PUBLIC    PROPERTY REF-ONLY      AS LOGICAL   GET. PROTECTED SET.
+    DEFINE PUBLIC    PROPERTY THIS          AS INTEGER   GET. PRIVATE   SET.
+    DEFINE PUBLIC    PROPERTY BREAK         AS LOGICAL   GET. PRIVATE   SET.
     DEFINE PROTECTED PROPERTY SELF-REF      AS LOGICAL   GET. PROTECTED SET.
     DEFINE PROTECTED PROPERTY LAST-KEY      AS CHARACTER GET. PROTECTED SET.
 
@@ -92,6 +94,8 @@ CLASS OOL.WINOBJ ABSTRACT:
         END.
     END SET.
 
+    DEFINE PUBLIC EVENT FOR-EACH SIGNATURE VOID (wip_obj AS WINOBJ).
+
     DEFINE PUBLIC ABSTRACT EVENT FOCUS-OFF SIGNATURE VOID (aip_data AS ARRAY).
 
     DEFINE PROTECTED TEMP-TABLE children
@@ -144,6 +148,242 @@ CLASS OOL.WINOBJ ABSTRACT:
             RETURN children.h_handle.
         END.
         RETURN ?.
+    END METHOD.
+
+    METHOD PUBLIC WINOBJ GET-FIRST-CHILD-BY (INPUT cip_prop  AS CHARACTER,
+                                             INPUT cip_value AS CHARACTER):
+        o_current = ?.
+        FOR EACH children
+            BY   children.i_idx:
+        
+            ASSIGN o_current = CAST(children.o_object, WINOBJ).
+            
+            CASE cip_prop:
+                WHEN "NAME" THEN
+                DO:
+                    IF o_current:NAME = cip_value       THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "X" THEN
+                DO:
+                    IF o_current:X = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF o_current:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                OTHERWISE ASSIGN o_current = ?.
+            END CASE.
+        END.
+
+        RETURN o_current.
+    END METHOD.
+
+    METHOD PUBLIC HANDLE GET-FIRST-CHILD-HANDLE-BY (INPUT cip_prop  AS CHARACTER,
+                                                    INPUT cip_value AS CHARACTER):
+        FOR EACH children
+            BY   children.i_idx:
+            
+            CASE cip_prop:
+                WHEN "NAME" THEN
+                DO:
+                    IF children.h_handle:NAME = cip_value         THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "X" THEN
+                DO:
+                    IF children.h_handle:X = INTEGER(cip_value)   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF children.h_handle:Y = INTEGER(cip_value)   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "COL" THEN
+                DO:
+                    IF children.h_handle:COL = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "ROW" THEN
+                DO:
+                    IF children.h_handle:ROW = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+            END CASE.
+        END.
+
+        RETURN ?.
+    END METHOD.
+
+    METHOD PUBLIC WINOBJ GET-LAST-CHILD-BY (INPUT cip_prop  AS CHARACTER,
+                                            INPUT cip_value AS CHARACTER):
+        o_current = ?.
+        FOR EACH children
+            BY   children.i_idx
+            DESC:
+        
+            ASSIGN o_current = CAST(children.o_object, WINOBJ).
+            
+            CASE cip_prop:
+                WHEN "NAME" THEN
+                DO:
+                    IF o_current:NAME = cip_value       THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "X" THEN
+                DO:
+                    IF o_current:X = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF o_current:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                OTHERWISE ASSIGN o_current = ?.
+            END CASE.
+        END.
+
+        RETURN o_current.
+    END METHOD.
+
+    METHOD PUBLIC HANDLE GET-LAST-CHILD-HANDLE-BY (INPUT cip_prop  AS CHARACTER,
+                                                   INPUT cip_value AS CHARACTER):
+        FOR EACH children
+            BY   children.i_idx
+            DESC:
+            
+            CASE cip_prop:
+                WHEN "NAME" THEN
+                DO:
+                    IF children.h_handle:NAME = cip_value         THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "X" THEN
+                DO:
+                    IF children.h_handle:X = INTEGER(cip_value)   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF children.h_handle:Y = INTEGER(cip_value)   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "COL" THEN
+                DO:
+                    IF children.h_handle:COL = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "ROW" THEN
+                DO:
+                    IF children.h_handle:ROW = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+            END CASE.
+        END.
+
+        RETURN ?.
+    END METHOD.
+
+    METHOD PUBLIC WINOBJ GET-NEXT-CHILD-BY (INPUT cip_prop  AS CHARACTER,
+                                            INPUT cip_value AS CHARACTER):
+        o_current = ?.
+        FOR EACH  children
+            WHERE children.i_idx > THIS-OBJECT:CURRENT-CHILD
+            BY    children.i_idx:
+        
+            ASSIGN o_current = CAST(children.o_object, WINOBJ).
+            
+            CASE cip_prop:
+                WHEN "NAME" THEN
+                DO:
+                    IF o_current:NAME = cip_value       THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "X" THEN
+                DO:
+                    IF o_current:X = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF o_current:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                OTHERWISE ASSIGN o_current = ?.
+            END CASE.
+        END.
+
+        IF o_current = ? THEN ASSIGN o_current = THIS-OBJECT:GET-FIRST-CHILD-BY(cip_prop, cip_value).
+
+        RETURN o_current.
+    END METHOD.
+
+    METHOD PUBLIC HANDLE GET-NEXT-CHILD-HANDLE-BY (INPUT cip_prop  AS CHARACTER,
+                                                   INPUT cip_value AS CHARACTER):
+        FOR EACH  children
+            WHERE children.i_idx > THIS-OBJECT:CURRENT-CHILD
+            BY    children.i_idx:
+            
+            CASE cip_prop:
+                WHEN "NAME" THEN
+                DO:
+                    IF children.h_handle:NAME = cip_value       THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "X" THEN
+                DO:
+                    IF children.h_handle:X = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF children.h_handle:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+            END CASE.
+        END.
+
+        RETURN THIS-OBJECT:GET-FIRST-CHILD-HANDLE-BY(cip_prop, cip_value).
+    END METHOD.
+
+    METHOD PUBLIC WINOBJ GET-PREV-CHILD-BY (INPUT cip_prop  AS CHARACTER,
+                                            INPUT cip_value AS CHARACTER):
+        o_current = ?.
+        FOR EACH  children
+            WHERE children.i_idx < THIS-OBJECT:CURRENT-CHILD
+            BY    children.i_idx
+            DESC:
+        
+            ASSIGN o_current = CAST(children.o_object, WINOBJ).
+            
+            CASE cip_prop:
+                WHEN "NAME" THEN
+                DO:
+                    IF o_current:NAME = cip_value       THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "X" THEN
+                DO:
+                    IF o_current:X = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF o_current:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                OTHERWISE ASSIGN o_current = ?.
+            END CASE.
+        END.
+
+        IF o_current = ? THEN ASSIGN o_current = THIS-OBJECT:GET-LAST-CHILD-BY(cip_prop, cip_value).
+
+        RETURN o_current.
+    END METHOD.
+
+    METHOD PUBLIC HANDLE GET-PREV-CHILD-HANDLE-BY (INPUT cip_prop  AS CHARACTER,
+                                                   INPUT cip_value AS CHARACTER):
+        FOR EACH  children
+            WHERE children.i_idx < THIS-OBJECT:CURRENT-CHILD
+            BY    children.i_idx
+            DESC:
+            
+            CASE cip_prop:
+                WHEN "NAME" THEN
+                DO:
+                    IF children.h_handle:NAME = cip_value       THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "X" THEN
+                DO:
+                    IF children.h_handle:X = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF children.h_handle:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+            END CASE.
+        END.
+
+        RETURN THIS-OBJECT:GET-LAST-CHILD-HANDLE-BY(cip_prop, cip_value).
     END METHOD.
 
     METHOD PUBLIC WINOBJ GET-FIRST-CHILD ():
@@ -254,6 +494,27 @@ CLASS OOL.WINOBJ ABSTRACT:
             WHERE children.h_handle = hip_handle:
         END.
         RETURN AVAILABLE children.
+    END METHOD.
+
+    METHOD PUBLIC VOID FOR-EACH ():
+        FOR-EACH:
+        FOR EACH children
+            BY   children.i_idx:
+            
+            THIS-OBJECT:THIS = children.i_idx.
+            THIS-OBJECT:FOR-EACH:PUBLISH(CAST(children.o_object, WINOBJ)).
+
+            IF THIS-OBJECT:BREAK THEN
+            DO:
+                ASSIGN THIS-OBJECT:BREAK = FALSE.
+                LEAVE FOR-EACH.
+            END.
+        END.
+        THIS-OBJECT:THIS = ?.
+    END METHOD.
+
+    METHOD PUBLIC VOID BREAK ():
+        ASSIGN THIS-OBJECT:BREAK = TRUE.
     END METHOD.
 
     METHOD PUBLIC ABSTRACT LOGICAL REGISTER ().

@@ -3,7 +3,6 @@ USING OOL.*.
 DEFINE VARIABLE MATH      AS MATH.
 DEFINE VARIABLE o_frame   AS WINFRAME.
 DEFINE VARIABLE o_temp    AS WINFILL.
-DEFINE VARIABLE o_current AS WINOBJ.
 DEFINE VARIABLE h_current AS HANDLE.
 
 DEFINE VARIABLE i_gridW AS INTEGER.
@@ -35,63 +34,68 @@ DO i_int = 1 TO i_gridW * i_gridH:
     o_temp:Y = i_y.
     o_temp:COLOR = 1.
     o_temp:VALUE = FILL("_", i_cellW - 1) + "|".
+    o_temp:HANDLE:PRIVATE-DATA = o_temp:VALUE.
     o_temp:VISIBLE = TRUE.
 END.
 
 o_frame:VISIBLE = TRUE.
-o_current = o_frame:GET-FIRST-CHILD().
-h_current = o_current:HANDLE.
+o_temp = CAST(o_frame:GET-FIRST-CHILD(), WINFILL).
+h_current = o_temp:HANDLE.
 
 REPEAT:
     ON 'ANY-KEY' OF h_current DO:
         CASE KEYLABEL(LASTKEY):
             WHEN "CURSOR-LEFT" THEN
             DO:
-                o_current = o_frame:GET-PREV-CHILD().
-                h_current = o_current:HANDLE.
+                o_temp = CAST(o_frame:GET-PREV-CHILD(), WINFILL).
+                h_current = o_temp:HANDLE.
                 APPLY "GO" TO SELF.
             END.
             WHEN "CURSOR-RIGHT" OR WHEN "TAB" THEN
             DO:
-                o_current = o_frame:GET-NEXT-CHILD().
-                h_current = o_current:HANDLE.
+                o_temp = CAST(o_frame:GET-NEXT-CHILD(), WINFILL).
+                h_current = o_temp:HANDLE.
                 APPLY "GO" TO SELF.
             END.
             WHEN "CURSOR-UP" THEN
             DO:
-                ASSIGN i_int = o_frame:CURRENT-CHILD - i_gridW
-                       i_int = IF i_int < 1 THEN
-                                   o_frame:NUM-CHILDREN + i_int
-                               ELSE
-                                   i_int.
-                
-                o_current = o_frame:GET-CHILD(i_int).
-                h_current = o_current:HANDLE.
+                o_temp = CAST(o_frame:GET-PREV-CHILD-BY("X", STRING(o_temp:X)), WINFILL).
+                h_current = o_temp:HANDLE.
                 APPLY "GO" TO SELF.
             END.
             WHEN "CURSOR-DOWN" OR WHEN "ENTER" THEN
             DO:
-                ASSIGN i_int = o_frame:CURRENT-CHILD + i_gridW
-                       i_int = IF i_int > o_frame:NUM-CHILDREN THEN
-                                   i_int - o_frame:NUM-CHILDREN
-                               ELSE
-                                   i_int.
-
-                o_current = o_frame:GET-CHILD(i_int).
-                h_current = o_current:HANDLE.
+                o_temp = CAST(o_frame:GET-NEXT-CHILD-BY("X", STRING(o_temp:X)), WINFILL).
+                h_current = o_temp:HANDLE.
                 APPLY "GO" TO SELF.
             END.
             WHEN "PF1" OR WHEN "F1" THEN
             DO:
                 ASSIGN l_next = TRUE.
             END.
+            OTHERWISE
+            DO:
+                IF LENGTH(h_current:SCREEN-VALUE) + 1 > o_temp:WIDTH THEN
+                DO:
+                    ASSIGN o_temp:SENSITIVE = FALSE
+                           o_temp:WIDTH     = o_temp:WIDTH + 1
+                           o_temp:FORMAT    = SUBSTITUTE("X(&1)", o_temp:WIDTH)
+                           o_temp:VALUE     = h_current:SCREEN-VALUE + CHR(LASTKEY)
+                           o_temp:SENSITIVE = TRUE
+                    NO-ERROR.
+                END.
+            END.
         END CASE.
     END.
 
     ASSIGN l_next = FALSE.
-    o_current:ENABLE().
+
+    o_temp:VALUE = "".
+    o_temp:ENABLE().
+
+    IF o_temp:VALUE = "" THEN ASSIGN o_temp:VALUE = h_current:PRIVATE-DATA.
 
     IF l_next THEN
-        ASSIGN o_current = o_frame:GET-NEXT-CHILD()
-               h_current = o_current:HANDLE.
+        ASSIGN o_temp = CAST(o_frame:GET-NEXT-CHILD(), WINFILL)
+               h_current = o_temp:HANDLE.
 END.
