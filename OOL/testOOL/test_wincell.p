@@ -36,6 +36,9 @@ DO i_int = 1 TO i_gridW * i_gridH:
     o_temp:VALUE = FILL("_", i_cellW - 1) + "|".
     o_temp:HANDLE:PRIVATE-DATA = o_temp:VALUE.
     o_temp:VISIBLE = TRUE.
+
+    //MESSAGE o_temp:NAME o_temp:X o_temp:Y.
+    //PAUSE.
 END.
 
 o_frame:VISIBLE = TRUE.
@@ -47,13 +50,13 @@ REPEAT:
         CASE KEYLABEL(LASTKEY):
             WHEN "CURSOR-LEFT" THEN
             DO:
-                o_temp = CAST(o_frame:GET-PREV-CHILD(), WINFILL).
+                o_temp = CAST(o_frame:GET-PREV-CHILD-BY("Y", STRING(o_temp:Y)), WINFILL).
                 h_current = o_temp:HANDLE.
                 APPLY "GO" TO SELF.
             END.
             WHEN "CURSOR-RIGHT" OR WHEN "TAB" THEN
             DO:
-                o_temp = CAST(o_frame:GET-NEXT-CHILD(), WINFILL).
+                o_temp = CAST(o_frame:GET-NEXT-CHILD-BY("Y", STRING(o_temp:Y)), WINFILL).
                 h_current = o_temp:HANDLE.
                 APPLY "GO" TO SELF.
             END.
@@ -77,6 +80,7 @@ REPEAT:
             DO:
                 IF LENGTH(h_current:SCREEN-VALUE) + 1 > o_temp:WIDTH THEN
                 DO:
+                    IF o_temp:WIDTH + 1 + o_temp:X < o_frame:WIDTH THEN
                     ASSIGN o_temp:SENSITIVE = FALSE
                            o_temp:WIDTH     = o_temp:WIDTH + 1
                            o_temp:FORMAT    = SUBSTITUTE("X(&1)", o_temp:WIDTH)
@@ -90,7 +94,6 @@ REPEAT:
 
     ASSIGN l_next = FALSE.
 
-    o_temp:VALUE = "".
     o_temp:ENABLE().
 
     IF o_temp:VALUE = "" THEN ASSIGN o_temp:VALUE = h_current:PRIVATE-DATA.

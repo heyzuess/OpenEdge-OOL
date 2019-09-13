@@ -171,8 +171,34 @@ CLASS OOL.WINOBJ ABSTRACT:
                 DO:
                     IF o_current:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
                 END.
-                OTHERWISE ASSIGN o_current = ?.
             END CASE.
+
+            ASSIGN o_current = ?.
+        END.
+
+        RETURN o_current.
+    END METHOD.
+
+    METHOD PUBLIC WINOBJ GET-FIRST-CHILD-BY (INPUT cip_prop  AS CHARACTER,
+                                             INPUT dip_value AS DECIMAL):
+        o_current = ?.
+        FOR EACH children
+            BY   children.i_idx:
+        
+            ASSIGN o_current = CAST(children.o_object, WINOBJ).
+            
+            CASE cip_prop:
+                WHEN "X" THEN
+                DO:
+                    IF o_current:X = dip_value THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF o_current:Y = dip_value THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+            END CASE.
+
+            ASSIGN o_current = ?.
         END.
 
         RETURN o_current.
@@ -210,6 +236,34 @@ CLASS OOL.WINOBJ ABSTRACT:
         RETURN ?.
     END METHOD.
 
+    METHOD PUBLIC HANDLE GET-FIRST-CHILD-HANDLE-BY (INPUT cip_prop  AS CHARACTER,
+                                                    INPUT dip_value AS DECIMAL):
+        FOR EACH children
+            BY   children.i_idx:
+            
+            CASE cip_prop:
+                WHEN "X" THEN
+                DO:
+                    IF children.h_handle:X = dip_value   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF children.h_handle:Y = dip_value   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "COL" THEN
+                DO:
+                    IF children.h_handle:COL = dip_value THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "ROW" THEN
+                DO:
+                    IF children.h_handle:ROW = dip_value THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+            END CASE.
+        END.
+
+        RETURN ?.
+    END METHOD.
+
     METHOD PUBLIC WINOBJ GET-LAST-CHILD-BY (INPUT cip_prop  AS CHARACTER,
                                             INPUT cip_value AS CHARACTER):
         o_current = ?.
@@ -232,8 +286,35 @@ CLASS OOL.WINOBJ ABSTRACT:
                 DO:
                     IF o_current:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
                 END.
-                OTHERWISE ASSIGN o_current = ?.
             END CASE.
+
+            ASSIGN o_current = ?.
+        END.
+
+        RETURN o_current.
+    END METHOD.
+
+    METHOD PUBLIC WINOBJ GET-LAST-CHILD-BY (INPUT cip_prop  AS CHARACTER,
+                                            INPUT dip_value AS DECIMAL):
+        o_current = ?.
+        FOR EACH children
+            BY   children.i_idx
+            DESC:
+        
+            ASSIGN o_current = CAST(children.o_object, WINOBJ).
+            
+            CASE cip_prop:
+                WHEN "X" THEN
+                DO:
+                    IF o_current:X = dip_value THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF o_current:Y = dip_value THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+            END CASE.
+
+            ASSIGN o_current = ?.
         END.
 
         RETURN o_current.
@@ -272,6 +353,35 @@ CLASS OOL.WINOBJ ABSTRACT:
         RETURN ?.
     END METHOD.
 
+    METHOD PUBLIC HANDLE GET-LAST-CHILD-HANDLE-BY (INPUT cip_prop  AS CHARACTER,
+                                                   INPUT dip_value AS DECIMAL):
+        FOR EACH children
+            BY   children.i_idx
+            DESC:
+            
+            CASE cip_prop:
+                WHEN "X" THEN
+                DO:
+                    IF children.h_handle:X = dip_value   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF children.h_handle:Y = dip_value   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "COL" THEN
+                DO:
+                    IF children.h_handle:COL = dip_value THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "ROW" THEN
+                DO:
+                    IF children.h_handle:ROW = dip_value THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+            END CASE.
+        END.
+
+        RETURN ?.
+    END METHOD.
+
     METHOD PUBLIC WINOBJ GET-NEXT-CHILD-BY (INPUT cip_prop  AS CHARACTER,
                                             INPUT cip_value AS CHARACTER):
         o_current = ?.
@@ -294,11 +404,40 @@ CLASS OOL.WINOBJ ABSTRACT:
                 DO:
                     IF o_current:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
                 END.
-                OTHERWISE ASSIGN o_current = ?.
             END CASE.
+
+            ASSIGN o_current = ?.
         END.
 
         IF o_current = ? THEN ASSIGN o_current = THIS-OBJECT:GET-FIRST-CHILD-BY(cip_prop, cip_value).
+
+        RETURN o_current.
+    END METHOD.
+
+    METHOD PUBLIC WINOBJ GET-NEXT-CHILD-BY (INPUT cip_prop  AS CHARACTER,
+                                            INPUT dip_value AS DECIMAL):
+        o_current = ?.
+        FOR EACH  children
+            WHERE children.i_idx > THIS-OBJECT:CURRENT-CHILD
+            BY    children.i_idx:
+        
+            ASSIGN o_current = CAST(children.o_object, WINOBJ).
+            
+            CASE cip_prop:
+                WHEN "X" THEN
+                DO:
+                    IF o_current:X = dip_value THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF o_current:Y = dip_value THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+            END CASE.
+
+            ASSIGN o_current = ?.
+        END.
+
+        IF o_current = ? THEN ASSIGN o_current = THIS-OBJECT:GET-FIRST-CHILD-BY(cip_prop, dip_value).
 
         RETURN o_current.
     END METHOD.
@@ -312,20 +451,57 @@ CLASS OOL.WINOBJ ABSTRACT:
             CASE cip_prop:
                 WHEN "NAME" THEN
                 DO:
-                    IF children.h_handle:NAME = cip_value       THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                    IF children.h_handle:NAME = cip_value         THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
                 END.
-                WHEN "X" THEN
+                WHEN "X"    THEN
                 DO:
-                    IF children.h_handle:X = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                    IF children.h_handle:X = INTEGER(cip_value)   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
                 END.
-                WHEN "Y" THEN
+                WHEN "Y"    THEN
                 DO:
-                    IF children.h_handle:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                    IF children.h_handle:Y = INTEGER(cip_value)   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "COL"  THEN
+                DO:
+                    IF children.h_handle:COL = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "ROW"  THEN
+                DO:
+                    IF children.h_handle:ROW = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
                 END.
             END CASE.
         END.
 
         RETURN THIS-OBJECT:GET-FIRST-CHILD-HANDLE-BY(cip_prop, cip_value).
+    END METHOD.
+
+    METHOD PUBLIC HANDLE GET-NEXT-CHILD-HANDLE-BY (INPUT cip_prop  AS CHARACTER,
+                                                   INPUT dip_value AS DECIMAL):
+        FOR EACH  children
+            WHERE children.i_idx > THIS-OBJECT:CURRENT-CHILD
+            BY    children.i_idx:
+            
+            CASE cip_prop:
+                WHEN "X"    THEN
+                DO:
+                    IF children.h_handle:X = dip_value   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "Y"    THEN
+                DO:
+                    IF children.h_handle:Y = dip_value   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "COL"  THEN
+                DO:
+                    IF children.h_handle:COL = dip_value THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "ROW"  THEN
+                DO:
+                    IF children.h_handle:ROW = dip_value THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+            END CASE.
+        END.
+
+        RETURN THIS-OBJECT:GET-FIRST-CHILD-HANDLE-BY(cip_prop, dip_value).
     END METHOD.
 
     METHOD PUBLIC WINOBJ GET-PREV-CHILD-BY (INPUT cip_prop  AS CHARACTER,
@@ -351,11 +527,41 @@ CLASS OOL.WINOBJ ABSTRACT:
                 DO:
                     IF o_current:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
                 END.
-                OTHERWISE ASSIGN o_current = ?.
             END CASE.
+
+            ASSIGN o_current = ?.
         END.
 
         IF o_current = ? THEN ASSIGN o_current = THIS-OBJECT:GET-LAST-CHILD-BY(cip_prop, cip_value).
+
+        RETURN o_current.
+    END METHOD.
+
+    METHOD PUBLIC WINOBJ GET-PREV-CHILD-BY (INPUT cip_prop  AS CHARACTER,
+                                            INPUT dip_value AS DECIMAL):
+        o_current = ?.
+        FOR EACH  children
+            WHERE children.i_idx < THIS-OBJECT:CURRENT-CHILD
+            BY    children.i_idx
+            DESC:
+        
+            ASSIGN o_current = CAST(children.o_object, WINOBJ).
+            
+            CASE cip_prop:
+                WHEN "X" THEN
+                DO:
+                    IF o_current:X = dip_value THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+                WHEN "Y" THEN
+                DO:
+                    IF o_current:Y = dip_value THEN RETURN THIS-OBJECT:GET-CHILD(children.i_idx).
+                END.
+            END CASE.
+
+            ASSIGN o_current = ?.
+        END.
+
+        IF o_current = ? THEN ASSIGN o_current = THIS-OBJECT:GET-LAST-CHILD-BY(cip_prop, dip_value).
 
         RETURN o_current.
     END METHOD.
@@ -370,20 +576,58 @@ CLASS OOL.WINOBJ ABSTRACT:
             CASE cip_prop:
                 WHEN "NAME" THEN
                 DO:
-                    IF children.h_handle:NAME = cip_value       THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                    IF children.h_handle:NAME = cip_value         THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
                 END.
-                WHEN "X" THEN
+                WHEN "X"    THEN
                 DO:
-                    IF children.h_handle:X = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                    IF children.h_handle:X = INTEGER(cip_value)   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
                 END.
-                WHEN "Y" THEN
+                WHEN "Y"    THEN
                 DO:
-                    IF children.h_handle:Y = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                    IF children.h_handle:Y = INTEGER(cip_value)   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "COL"  THEN
+                DO:
+                    IF children.h_handle:COL = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "ROW"  THEN
+                DO:
+                    IF children.h_handle:ROW = INTEGER(cip_value) THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
                 END.
             END CASE.
         END.
 
         RETURN THIS-OBJECT:GET-LAST-CHILD-HANDLE-BY(cip_prop, cip_value).
+    END METHOD.
+
+    METHOD PUBLIC HANDLE GET-PREV-CHILD-HANDLE-BY (INPUT cip_prop  AS CHARACTER,
+                                                   INPUT dip_value AS DECIMAL):
+        FOR EACH  children
+            WHERE children.i_idx < THIS-OBJECT:CURRENT-CHILD
+            BY    children.i_idx
+            DESC:
+            
+            CASE cip_prop:
+                WHEN "X"    THEN
+                DO:
+                    IF children.h_handle:X = dip_value   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "Y"    THEN
+                DO:
+                    IF children.h_handle:Y = dip_value   THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "COL"  THEN
+                DO:
+                    IF children.h_handle:COL = dip_value THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+                WHEN "ROW"  THEN
+                DO:
+                    IF children.h_handle:ROW = dip_value THEN RETURN THIS-OBJECT:GET-CHILD-HANDLE(children.i_idx).
+                END.
+            END CASE.
+        END.
+
+        RETURN THIS-OBJECT:GET-LAST-CHILD-HANDLE-BY(cip_prop, dip_value).
     END METHOD.
 
     METHOD PUBLIC WINOBJ GET-FIRST-CHILD ():
