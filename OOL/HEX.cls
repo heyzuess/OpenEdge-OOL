@@ -41,6 +41,18 @@ CLASS OOL.HEX:
         RETURN c_temp.
     END METHOD.
 
+    METHOD PUBLIC CHARACTER HexToHash (INPUT iip_integer AS INTEGER):
+        ASSIGN c_temp = ""
+               i_temp = 0
+               c_temp = THIS-OBJECT:HexToString(iip_integer).
+
+        ASSIGN c_temp = REPLACE(c_temp,"0x","")
+               i_temp = 6 - LENGTH(c_temp)
+               c_temp = "#" + FILL("0", i_temp) + c_temp.
+
+        RETURN c_temp.
+    END METHOD.
+
     METHOD PUBLIC INTEGER StringToHex (INPUT cip_string AS CHARACTER):
         ASSIGN c_temp      = ""
                i_temp      = 0
