@@ -3,7 +3,7 @@
   Released under the GNU General Public License GPL-3.0-or-later
 
   This is a recreation of a C# Simple 2D Game Physics Application by Hydeen.
-  It is intended soley as a demonstration of OpenEdge .NET OOP using the 
+  It is intended soley as a demonstration of OpenEdge .NET OOP using the
   C# DLL Libraries. Source project and code is licensed under CPOL License 1.02.
   Source code, project, and license information can be found online at:
   https://www.codeproject.com/Tips/881397/Csharp-Simple-D-Game-Physics-Gravity-Jumping-Movem
@@ -12,12 +12,12 @@
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-          
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-          
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>
 
@@ -98,6 +98,7 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
     DEFINE PRIVATE VARIABLE tempDR                 AS DialogResult                           NO-UNDO.
     DEFINE PRIVATE VARIABLE tempSW                 AS System.IO.StreamWriter                 NO-UNDO.
     DEFINE PRIVATE VARIABLE i_int                  AS INTEGER                                NO-UNDO.
+    DEFINE PRIVATE VARIABLE i_count                AS INTEGER                                NO-UNDO.
 
     DEFINE PRIVATE VARIABLE Bombs                  AS "System.Windows.Forms.PictureBox[]"    NO-UNDO.
     DEFINE PRIVATE VARIABLE Explosives             AS "System.Windows.Forms.PictureBox[]"    NO-UNDO.
@@ -121,6 +122,17 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
     DEFINE PRIVATE VARIABLE Speed_Jump             AS INTEGER                                NO-UNDO.
     DEFINE PRIVATE VARIABLE Speed_Fall             AS INTEGER                                NO-UNDO.
     DEFINE PRIVATE VARIABLE Score                  AS INTEGER                                NO-UNDO.
+
+    DEFINE PRIVATE VARIABLE r                      AS INTEGER                                NO-UNDO.
+    DEFINE PRIVATE VARIABLE NextSpot               AS INTEGER                                NO-UNDO.
+    DEFINE PRIVATE VARIABLE pb                     AS PictureBox                             NO-UNDO.
+    DEFINE PRIVATE VARIABLE Coin                   AS PictureBox                             NO-UNDO.
+    DEFINE PRIVATE VARIABLE pbR                    AS PictureBox                             NO-UNDO.
+    DEFINE PRIVATE VARIABLE pbL                    AS PictureBox                             NO-UNDO.
+
+    DEFINE PRIVATE VARIABLE Character              AS Actor                                  NO-UNDO.
+    DEFINE PRIVATE VARIABLE World                  AS World                                  NO-UNDO.
+    DEFINE PRIVATE VARIABLE Enemy                  AS Enemy                                  NO-UNDO.
 
     CONSTRUCTOR TEST_GAME ():
         SUPER().
@@ -174,6 +186,33 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:debug_PJump            = NEW Label().
         THIS:debug_PGravity         = NEW Label().
         THIS:debug_MGravity         = NEW Label().
+
+        THIS:Character = NEW Actor().
+        THIS:Character:ResourceLocation = "C:\OpenEdge\WRK\OOL\NET\2D\TEST_GAME\Resources\".
+        THIS:Character:jump_l  = THIS:Character:LoadFromDir("").
+        THIS:Character:jump_r  = THIS:Character:LoadFromDir("").
+        THIS:Character:stand_l = THIS:Character:LoadFromDir("").
+        THIS:Character:stand_r = THIS:Character:LoadFromDir("").
+        THIS:Character:walk_l  = THIS:Character:LoadFromDir("").
+        THIS:Character:walk_r  = THIS:Character:LoadFromDir("").
+
+        THIS:World = NEW World().
+        THIS:World:ResourceLocation = THIS:Character:ResourceLocation.
+        THIS:World:Boom     = THIS:World:LoadFromDir("").
+        THIS:World:Bush     = THIS:World:LoadFromDir("").
+        THIS:World:Clouds   = THIS:World:LoadFromDir("").
+        THIS:World:Coin     = THIS:World:LoadFromDir("").
+        THIS:World:Floor    = THIS:World:LoadFromDir("").
+        THIS:World:Pipe     = THIS:World:LoadFromDir("").
+        THIS:World:Platform = THIS:World:LoadFromDir("").
+
+        THIS:Enemy = NEW Enemy().
+        THIS:Enemy:ResourceLocation = THIS:Character:ResourceLocation.
+        THIS:Enemy:Bomb        = THIS:Enemy:LoadFromDir("").
+        THIS:Enemy:Enemy_left  = THIS:Enemy:LoadFromDir("").
+        THIS:Enemy:Enemy_right = THIS:Enemy:LoadFromDir("").
+        THIS:Enemy:Rocket_L    = THIS:Enemy:LoadFromDir("").
+        THIS:Enemy:Rocket_R    = THIS:Enemy:LoadFromDir("").
 
         CAST(THIS:pb_NPC2, ISupportInitialize):BeginInit().
         CAST(THIS:pb_NPC1, ISupportInitialize):BeginInit().
@@ -307,7 +346,7 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:label_Score:Text = "Score: 0".
 
         THIS:pb_Player:BackColor = Color:Transparent.
-        THIS:pb_Player:Image = Image:FromFile("").
+        THIS:pb_Player:Image = THIS:Character:stand_r.
         THIS:pb_Player:Location = NEW Point(12, 94).
         THIS:pb_Player:Name = "pb_Player".
         THIS:pb_Player:Size = NEW Size(16, 32).
@@ -478,6 +517,8 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:Text = "Test Game".
         THIS:StartPosition = FormStartPosition:CenterScreen.
         THIS:Load:Subscribe(TEST_GAME_Load).
+        THIS:KeyDown:Subscribe(TEST_GAME_KeyDown).
+        THIS:KeyUp:Subscribe(TEST_GAME_KeyUp).
 
         CAST(THIS:pb_NPC2, ISupportInitialize):EndInit().
         CAST(THIS:pb_NPC1, ISupportInitialize):EndInit().
@@ -521,7 +562,6 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:Speed_Jump     = 3.
         THIS:Speed_Fall     = 3.
         THIS:Score          = 0.
-
     END METHOD.
 
     METHOD PRIVATE VOID onToolStripMenuItem_Click (INPUT sender AS Object,
@@ -542,18 +582,311 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
 
     METHOD PRIVATE VOID timer_Gravity_Tick (INPUT sender AS Object,
                                             INPUT e      AS EventArgs):
+        IF NOT THIS:Player_Jump                                                           AND 
+           THIS:pb_Player:Location:Y + THIS:pb_Player:Height < THIS:WorldFrame:Height - 2 AND
+           NOT THIS:Collision_Top(THIS:pb_Player)                                         THEN
+        DO:
+            THIS:pb_Player:Top = THIS:pb_Player:Top + THIS:Speed_Fall.
+        END.
+
+        IF NOT THIS:Player_Jump                                                           AND
+           THIS:pb_Player:Location:Y + THIS:pb_Player:Height > THIS:WorldFrame:Height - 1 THEN
+        DO:
+            THIS:pb_Player:Top = THIS:pb_Player:Top - 1.
+        END.
+
+        i_count = 0.
+        IF THIS:GameOn THEN
+        DO:
+            DO i_int = 1 TO THIS:Bombs:Length:
+                ASSIGN THIS:tempPictureBox = CAST(THIS:Bombs:GetValue(i_int), PictureBox).
+
+                IF VALID-OBJECT(THIS:tempPictureBox) THEN
+                DO:
+                    IF NOT THIS:OutsideWorldFrame(THIS:tempPictureBox) THEN
+                    DO:
+                        IF THIS:tempPictureBox:Name = "pb" OR THIS:tempPictureBox:Name = "Coin" THEN
+                        DO:
+                            THIS:tempPictureBox:Top = THIS:tempPictureBox:Top + 3.
+                        END.
+                        IF THIS:tempPictureBox:Name = "pbR" THEN
+                        DO:
+                            THIS:tempPictureBox:Left = THIS:tempPictureBox:Left + 3.
+                        END.
+                        IF THIS:tempPictureBox:Name = "pbL" THEN
+                        DO:
+                            THIS:tempPictureBox:Left = THIS:tempPictureBox:Left - 3.
+                        END.
+                    END.
+                    ELSE
+                    DO:
+                        IF THIS:OutsideWorldFrame(THIS:tempPictureBox) THEN
+                        DO:
+                            THIS:Bombs:SetValue(?, i_count).
+                            THIS:tempPictureBox:Dispose().
+                            THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Removed rocket at &2&3",
+                                                                    DateTime:Now,
+                                                                    i_count,
+                                                                    CHR(13) + CHR(10)).
+                        END.
+                        IF THIS:OutsideWorldFrame(THIS:tempPictureBox) THEN
+                        DO:
+                            THIS:Bombs:SetValue(?, i_count).
+                            THIS:tempPictureBox:Dispose().
+                            THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Removed rocket at &2&3",
+                                                                    DateTime:Now,
+                                                                    i_count,
+                                                                    CHR(13) + CHR(10)).
+                        END.
+                        THIS:Bombs:SetValue(?, i_count).
+                        THIS:tempPictureBox:Dispose().
+                        THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Removed bomb at &2&3",
+                                                                DateTime:Now,
+                                                                i_count,
+                                                                CHR(13) + CHR(10)).
+                        
+                        IF VALID-OBJECT(CAST(THIS:Explosives:GetValue(0), PictureBox)) THEN
+                        DO:
+                            CAST(THIS:Explosives:GetValue(0), PictureBox):Dispose().
+                            THIS:Explosives:SetValue(?, 0).
+                        END.
+                        THIS:CreateBoom(THIS:tempPictureBox:Location:X, THIS:tempPictureBox:Location:Y).
+                    END.
+                END.
+
+                i_count = i_count + 1.
+                IF i_count >= 10 THEN i_count = 0.
+            END.
+        END.
     END METHOD.
 
     METHOD PRIVATE VOID timer_Jump_Tick (INPUT sender AS Object,
                                          INPUT e      AS EventArgs):
+        IF THIS:GameOn THEN
+        DO:
+            IF THIS:Player_Right                                 AND
+               THIS:pb_Player:Right <= THIS:WorldFrame:Width - 3 AND
+               NOT THIS:Collision_Left(THIS:pb_Player)           THEN
+            DO:
+                THIS:pb_Player:Left = THIS:pb_Player:Left + THIS:Speed_Movement.
+            END.
+
+            IF THIS:Player_Left                         AND
+               THIS:pb_Player:Location:X >= 3           AND
+               NOT THIS:Collision_Right(THIS:pb_Player) THEN
+            DO:
+                THIS:pb_Player:Left = THIS:pb_Player:Left - THIS:Speed_Movement.
+            END.
+        END.
+        ELSE
+        DO:
+            THIS:Player_Right = FALSE.
+            THIS:Player_Left  = FALSE.
+        END.
+
+        IF THIS:Force > 0 THEN
+        DO:
+            IF THIS:Collision_Bottom(THIS:pb_Player) THEN
+            DO:
+                THIS:Force = 0.
+            END.
+            ELSE
+            DO:
+                THIS:Force = THIS:Force - 1.
+                THIS:pb_Player:Top = THIS:pb_Player:Top - THIS:Speed_Jump.
+            END.
+        END.
+        ELSE
+        DO:
+            THIS:Player_Jump = FALSE.
+        END.
     END METHOD.
 
     METHOD PRIVATE VOID timer_Anim_Tick (INPUT sender AS Object,
                                          INPUT e      AS EventArgs):
+        THIS:Anim = THIS:Anim + 1.
+        THIS:label1:Text = "Bombs: " + STRING(THIS:GetBombsNum(THIS:Bombs)).
+        THIS:label2:Text = "Highscore: " + STRING(123456789).
+
+        IF THIS:Player_Right AND THIS:Anim MODULO 15 = 0 THEN
+        DO:
+            THIS:pb_Player:Image = THIS:Character:walk_r.
+        END.
+        IF THIS:Player_Left  AND THIS:Anim MODULO 15 = 0 THEN
+        DO:
+            THIS:pb_Player:Image = THIS:Character:walk_l.
+        END.
+
+        DO i_int = 1 TO THIS:Bombs:Length:
+            THIS:tempPictureBox = CAST(THIS:Bombs:GetValue(i_int), PictureBox).
+
+            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            DO:
+                IF THIS:pb_Player:Bounds:IntersectsWith(THIS:tempPictureBox:Bounds) THEN
+                DO:
+                    IF THIS:tempPictureBox:Name = "Coin" THEN
+                    DO:
+                        THIS:Score = THIS:Score + 1.
+                        THIS:tempPictureBox:Dispose().
+                    END.
+                    ELSE
+                    DO:
+                        THIS:Dead().
+                        THIS:tempPictureBox:Dispose().
+                    END.
+                END.
+            END.
+        END.
+
+        DO i_int = 1 TO THIS:NPC:Length:
+            THIS:tempPictureBox = CAST(THIS:NPC:GetValue(i_int), PictureBox).
+
+            IF THIS:tempPictureBox:Bounds:IntersectsWith(THIS:pb_Player:Bounds) THEN
+            DO:
+                THIS:Dead().
+            END.
+            ELSE
+            DO:
+                IF THIS:tempPictureBox:Location:X > THIS:pb_Player:Location:X AND
+                   THIS:tempPictureBox:Location:X < THIS:WorldFrame:Width     AND
+                   NOT THIS:Collision_Right(THIS:tempPictureBox)              AND
+                   THIS:GameOn                                                THEN
+                DO:
+                    THIS:tempPictureBox:Left  = THIS:tempPictureBox:Left - 1.
+                    THIS:tempPictureBox:Image = THIS:Enemy:Enemy_left.
+                END.
+
+                IF THIS:tempPictureBox:Location:X < THIS:pb_Player:Location:X AND
+                   THIS:tempPictureBox:Location:X > 0                         AND
+                   NOT THIS:Collision_Left(THIS:tempPictureBox)               AND
+                   THIS:GameOn                                                THEN
+                DO:
+                    THIS:tempPictureBox:Left  = THIS:tempPictureBox:Left + 1.
+                    THIS:tempPictureBox:Image = THIS:Enemy:Enemy_right.
+                END.
+            END.
+        END.
     END METHOD.
 
     METHOD PRIVATE VOID timer_Randombomb_Tick (INPUT sender AS Object,
                                                INPUT e      AS EventArgs):
+        THIS:rng = NEW Random().
+        IF THIS:GameOn OR (NOT THIS:GameOn AND NOT THIS:label_Dead:Visible) THEN
+        DO:
+            IF THIS:GetBombsNum(THIS:Bombs) = 10 THEN
+            DO:
+                THIS:timer_BombFailsafe:Enabled = TRUE.
+            END.
+            ELSE
+            DO:
+                THIS:timer_BombFailsafe:Enabled = FALSE.
+                THIS:r = 2.
+                THIS:NextSpot = THIS:NextBomb(THIS:Bombs).
+                IF THIS:Score > 20 AND THIS:Score < 40 THEN THIS:r = 12.
+                IF THIS:Score > 40 AND THIS:Score < 80 THEN THIS:r = 13.
+                IF THIS:Score > 80                     THEN THIS:r = 14.
+                CASE THIS:rng:Next(1, THIS:r):
+                    WHEN 1 OR
+                    WHEN 2 OR
+                    WHEN 3 OR
+                    WHEN 4 OR
+                    WHEN 5 OR
+                    WHEN 6 OR
+                    WHEN 7 OR
+                    WHEN 8 THEN
+                    DO:
+                        THIS:NextSpot = THIS:NextBomb(THIS:Bombs).
+                        THIS:pb = NEW PictureBox().
+                        THIS:pb:Name = "pb".
+                        THIS:pb:BackColor = Color:Transparent.
+                        THIS:pb:SizeMode = PictureBoxSizeMode:StretchImage.
+                        THIS:pb:Size = NEW Size(16, 16).
+                        THIS:pb:Image = THIS:Enemy:Bomb.
+                        IF THIS:Score > 20 THEN
+                        DO:
+                            THIS:pb:Location = NEW Point(THIS:rng:Next(THIS:pb_Player:Location:X - 10, THIS:pb_Player:Location:X + 10), 0).
+                        END.
+                        ELSE
+                        DO:
+                            THIS:pb:Location = NEW Point(THIS:rng:Next(0, THIS:WorldFrame:Width), 0).
+                        END.
+                        THIS:WorldFrame:Controls:Add(THIS:pb).
+                        THIS:Bombs:SetValue(THIS:pb, THIS:NextBomb(THIS:Bombs)).
+                        THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Added bomb at &2&3",
+                                                                   DateTime:Now,
+                                                                   THIS:NextSpot,
+                                                                   CHR(13) + CHR(10)).
+                    END.
+                    WHEN 9  OR
+                    WHEN 10 OR
+                    WHEN 11 THEN
+                    DO:
+                        THIS:NextSpot = THIS:NextBomb(THIS:Bombs).
+                        THIS:Coin = NEW PictureBox().
+                        THIS:Coin:Name = "Coin".
+                        THIS:Coin:BackColor = Color:Transparent.
+                        THIS:Coin:SizeMode = PictureBoxSizeMode:Zoom.
+                        THIS:Coin:Size = NEW Size(20, 29).
+                        THIS:Coin:Image = THIS:World:Coin.
+                        THIS:Coin:Location = NEW Point(THIS:rng:Next(0, THIS:WorldFrame:Width), 0).
+                        THIS:WorldFrame:Controls:Add(THIS:Coin).
+                        THIS:Bombs:SetValue(THIS:Coin, THIS:NextBomb(THIS:Bombs)).
+                        THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Added coin at &2&3",
+                                                                   DateTime:Now,
+                                                                   THIS:NextSpot,
+                                                                   CHR(13) + CHR(10)).
+                    END.
+                    WHEN 12 THEN
+                    DO:
+                        THIS:NextSpot = THIS:NextBomb(THIS:Bombs).
+                        THIS:pbR = NEW PictureBox().
+                        THIS:pbR:Name = "pbR".
+                        THIS:pbR:BackColor = Color:Transparent.
+                        THIS:pbR:SizeMode = PictureBoxSizeMode:StretchImage.
+                        THIS:pbR:Size = NEW Size(30, 20).
+                        THIS:pbR:Image = THIS:Enemy:Rocket_R.
+                        IF THIS:rng:Next(1, 3) = 1 THEN
+                        DO:
+                            THIS:pbR:Location = NEW Point(1, 205).
+                        END.
+                        ELSE
+                        DO:
+                            THIS:pbR:Location = NEW Point(1, 124).
+                        END.
+                        THIS:WorldFrame:Controls:Add(THIS:pbR).
+                        THIS:Bombs:SetValue(THIS:pbR, THIS:NextBomb(THIS:Bombs)).
+                        THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Added bomb at &2&3",
+                                                                   DateTime:Now,
+                                                                   THIS:NextSpot,
+                                                                   CHR(13) + CHR(10)).
+                    END.
+                    WHEN 13 THEN
+                    DO:
+                        THIS:NextSpot = THIS:NextBomb(THIS:Bombs).
+                        THIS:pbL = NEW PictureBox().
+                        THIS:pbL:Name = "pbL".
+                        THIS:pbL:BackColor = Color:Transparent.
+                        THIS:pbL:SizeMode = PictureBoxSizeMode:StretchImage.
+                        THIS:pbL:Size = NEW Size(30, 20).
+                        THIS:pbL:Image = THIS:Enemy:Rocket_L.
+                        IF THIS:rng:Next(1, 3) = 1 THEN
+                        DO:
+                            THIS:pbL:Location = NEW Point(THIS:WorldFrame:Width + 30, 205).
+                        END.
+                        ELSE
+                        DO:
+                            THIS:pbL:Location = NEW Point(THIS:WorldFrame:Width + 30, 151).
+                        END.
+                        THIS:WorldFrame:Controls:Add(THIS:pbL).
+                        THIS:Bombs:SetValue(THIS:pbL, THIS:NextBomb(THIS:Bombs)).
+                        THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Added bomb at &2&3",
+                                                                   DateTime:Now,
+                                                                   THIS:NextSpot,
+                                                                   CHR(13) + CHR(10)).
+                    END.
+                END CASE.
+            END.
+        END.
     END METHOD.
 
     METHOD PRIVATE VOID timer_BombFailsafe_Tick (INPUT sender AS Object,
@@ -747,5 +1080,225 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
             THIS:label_Dead:Visible = TRUE.
             THIS:GameOn = FALSE.
         END.
+    END METHOD.
+
+    METHOD PUBLIC VOID RemovePictureBoxAt (INPUT x AS INTEGER,
+                                           INPUT y AS INTEGER):
+        DO i_int = 1 TO THIS:Explosives:Length:
+            THIS:tempPictureBox = CAST(THIS:Explosives:GetValue(i_int), PictureBox).
+
+            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            DO:
+                IF THIS:tempPictureBox:Location:X = x AND
+                   THIS:tempPictureBox:Location:Y = y THEN THIS:tempPictureBox:Dispose().
+            END.
+        END.
+    END METHOD.
+
+    METHOD PUBLIC VOID Reset ():
+        THIS:label_Dead:Visible = FALSE.
+
+        DO i_int = 1 TO THIS:Bombs:Length:
+            THIS:tempPictureBox = CAST(THIS:Bombs:GetValue(i_int), PictureBox).
+
+            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            DO:
+                THIS:tempPictureBox:Dispose().
+                THIS:tempPictureBox = ?.
+            END.
+        END.
+
+        DO i_int = 1 TO THIS:Explosives:Length:
+            THIS:tempPictureBox = CAST(THIS:Explosives:GetValue(i_int), PictureBox).
+
+            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            DO:
+                THIS:tempPictureBox:Dispose().
+                THIS:tempPictureBox = ?.
+            END.
+        END.
+
+        THIS:pb_Player:Visible = TRUE.
+        THIS:pb_Player:Location = NEW Point(167, THIS:WorldFrame:Size:Height - 10 - THIS:pb_Player:Height).
+        THIS:pb_NPC1:Location = NEW Point(1, THIS:WorldFrame:Size:Height - 1 - THIS:pb_NPC1:Height).
+        THIS:pb_NPC2:Location = NEW Point(THIS:WorldFrame:Width - 10, THIS:WorldFrame:Size:Height - 1 - THIS:pb_NPC2:Height).
+        THIS:pb_Player:Image = THIS:Character:stand_r.
+        THIS:Score = 0.
+        THIS:BombSize = 16.
+        THIS:GameOn = TRUE.
+    END METHOD.
+
+    METHOD PUBLIC VOID CreateBoom (INPUT x AS INTEGER,
+                                   INPUT y AS INTEGER):
+        THIS:tempPictureBox = NEW PictureBox().
+        THIS:tempPictureBox:Name = "Boom".
+        THIS:tempPictureBox:BackColor = Color:Transparent.
+        THIS:tempPictureBox:SizeMode = PictureBoxSizeMode:StretchImage.
+        THIS:tempPictureBox:Size = NEW Size(THIS:BombSize, THIS:BombSize).
+        THIS:tempPictureBox:Image = THIS:World:Boom.
+        THIS:tempPictureBox:Location = NEW Point(x, y).
+        THIS:WorldFrame:Controls:Add(THIS:tempPictureBox).
+        THIS:Explosives:SetValue(THIS:tempPictureBox, 0).
+    END METHOD.
+
+    METHOD PUBLIC VOID CreateCloud (INPUT x AS INTEGER,
+                                    INPUT y AS INTEGER):
+        IF y = ? THEN ASSIGN y = 20.
+
+        THIS:tempPictureBox = NEW PictureBox().
+        THIS:tempPictureBox:Name = "Cloud".
+        THIS:tempPictureBox:BackColor = Color:Transparent.
+        THIS:tempPictureBox:SizeMode = PictureBoxSizeMode:StretchImage.
+        THIS:tempPictureBox:Size = NEW Size(THIS:BombSize, THIS:BombSize).
+        THIS:tempPictureBox:Image = THIS:World:Clouds.
+        THIS:tempPictureBox:Location = NEW Point(x, y).
+        THIS:WorldFrame:Controls:Add(THIS:tempPictureBox).
+    END METHOD.
+
+    METHOD PUBLIC VOID PaintBox (INPUT x AS INTEGER,
+                                 INPUT y AS INTEGER,
+                                 INPUT w AS INTEGER,
+                                 INPUT h AS INTEGER,
+                                 INPUT c AS Color):
+        THIS:tempPictureBox = NEW PictureBox().
+        THIS:tempPictureBox:BackColor = c.
+        THIS:tempPictureBox:Size = NEW Size(w, h).
+        THIS:tempPictureBox:Location = NEW Point(x, y).
+        THIS:WorldFrame:Controls:Add(THIS:tempPictureBox).
+    END METHOD.
+
+    METHOD PUBLIC VOID CreatePipe (INPUT x AS INTEGER):
+        i_int = THIS:WorldFrame:Height - 45.
+        THIS:tempPictureBox = NEW PictureBox().
+        THIS:tempPictureBox:Name = "Pipe".
+        THIS:tempPictureBox:BackColor = Color:Transparent.
+        THIS:tempPictureBox:SizeMode = PictureBoxSizeMode:StretchImage.
+        THIS:tempPictureBox:Size = NEW Size(35, 45).
+        THIS:tempPictureBox:Image = THIS:World:Pipe.
+        THIS:tempPictureBox:Location = NEW Point(x, i_int).
+        THIS:WorldFrame:Controls:Add(THIS:tempPictureBox).
+    END METHOD.
+
+    METHOD PUBLIC VOID TEST_GAME_KeyDown (INPUT sender AS Object,
+                                          INPUT e      AS KeyEventArgs):
+        CASE e:KeyCode:
+            WHEN Keys:Z THEN
+            DO:
+                THIS:Score = THIS:Score + 120.
+            END.
+            WHEN Keys:X THEN
+            DO:
+                THIS:pb_Player:Top = THIS:pb_Player:Top + 3.
+            END.
+            WHEN Keys:P THEN
+            DO:
+                IF THIS:GameOn THEN
+                DO:
+                    THIS:GameOn = FALSE.
+                    THIS:label_Dead:Text = "Paused, press P to Continue".
+                    THIS:label_Dead:Visible = TRUE.
+                END.
+                ELSE
+                DO:
+                    THIS:GameOn = TRUE.
+                    THIS:label_Dead:Text = "You died, press Spaec to start".
+                    THIS:label_Dead:Visible = FALSE.
+                END.
+            END.
+            WHEN Keys:Left THEN
+            DO:
+                IF THIS:GameOn THEN
+                DO:
+                    THIS:LastDirRight = FALSE.
+                    THIS:Player_Left = TRUE.
+                END.
+            END.
+            WHEN Keys:Right THEN
+            DO:
+                IF THIS:GameOn THEN
+                DO:
+                    THIS:LastDirRight = TRUE.
+                    THIS:Player_Right = TRUE.
+                END.
+            END.
+            WHEN Keys:Space THEN
+            DO:
+                IF THIS:label_Dead:Visible                   AND
+                   INDEX(THIS:label_Dead:Text, "Paused") > 0 THEN
+                DO:
+                    THIS:Reset().
+                END.
+                ELSE
+                DO:
+                    IF NOT THIS:Player_Jump AND NOT THIS:InAirCollision(THIS:pb_Player) THEN
+                    DO:
+                        IF THIS:LastDirRight THEN
+                            THIS:pb_Player:Image = THIS:Character:jump_r.
+                        ELSE
+                            THIS:pb_Player:Image = THIS:Character:jump_l.
+
+                        THIS:pb_Player:Top = THIS:pb_Player:Top - THIS:Speed_Jump.
+                        THIS:Force = THIS:Gravity.
+                        THIS:Player_Jump = TRUE.
+                    END.
+                END.
+            END.
+        END CASE.
+    END METHOD.
+
+    METHOD PUBLIC VOID TEST_GAME_KeyUp (INPUT sender AS Object,
+                                        INPUT e      AS KeyEventArgs):
+        IF THIS:GameOn THEN
+        DO:
+            CASE e:KeyCode:
+                WHEN Keys:Left THEN
+                DO:
+                    THIS:pb_Player:Image = THIS:Character:stand_l.
+                    THIS:LastDirRight = FALSE.
+                    THIS:Player_Left = FALSE.
+                END.
+                WHEN Keys:Right THEN
+                DO:
+                    THIS:pb_Player:Image = THIS:Character:stand_r.
+                    THIS:LastDirRight = TRUE.
+                    THIS:Player_Right = FALSE.
+                END.
+            END CASE.
+        END.
+    END METHOD.
+
+    METHOD PUBLIC INTEGER GetBombsNum (INPUT Arr AS "System.Windows.Forms.PictureBox[]"):
+        i_count = 0.
+        DO i_int = 1 TO Arr:Length:
+            THIS:tempPictureBox = CAST(Arr:GetValue(i_int), PictureBox).
+            IF VALID-OBJECT(THIS:tempPictureBox) THEN ASSIGN i_count = i_count + 1.
+        END.
+        RETURN i_count.
+    END METHOD.
+
+    METHOD PUBLIC LOGICAL NoCollision (INPUT tar AS PictureBox):
+        DO i_int = 1 TO THIS:WorldObjects:Length:
+            THIS:tempPictureBox = CAST(THIS:WorldObjects:GetValue(i_int), PictureBox).
+
+            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            DO:
+                IF tar:Bounds:IntersectsWith(THIS:tempPictureBox:Bounds) THEN RETURN TRUE.
+            END.
+        END.
+        RETURN FALSE.
+    END METHOD.
+
+    METHOD PUBLIC INTEGER NextBomb (INPUT Arr AS "System.Windows.Forms.PictureBox[]"):
+        IF THIS:GetBombsNum(Arr) < 10 THEN
+        DO:
+            DO i_int = 1 TO 10:
+                IF NOT VALID-OBJECT(CAST(Arr:GetValue(i_int - 1), PictureBox)) THEN
+                DO:
+                    RETURN i_int - 1.
+                END.
+            END.
+        END.
+        THIS:Bombs:SetValue(?, 0).
+        RETURN 0.
     END METHOD.
 END CLASS.
