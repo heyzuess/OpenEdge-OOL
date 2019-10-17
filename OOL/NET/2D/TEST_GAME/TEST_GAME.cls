@@ -46,8 +46,8 @@ USING Progress.Windows.Form   FROM ASSEMBLY.
 
 USING OOL.NET.2D.TEST_GAME.*.
 
-CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
-    DEFINE PROTECTED PROPERTY THIS AS TEST_GAME
+CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
+    DEFINE PROTECTED PROPERTY THIS AS OOL.NET.2D.TEST_GAME.TEST_GAME
     GET ():
         RETURN THIS-OBJECT.
     END GET.
@@ -94,11 +94,13 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
     DEFINE PRIVATE VARIABLE tempPictureBox         AS PictureBox                             NO-UNDO.
     DEFINE PRIVATE VARIABLE temp1                  AS PictureBox                             NO-UNDO.
     DEFINE PRIVATE VARIABLE tempControl            AS Control                                NO-UNDO.
+    DEFINE PRIVATE VARIABLE tempArray              AS Array                                  NO-UNDO.
     DEFINE PRIVATE VARIABLE tempSF                 AS SaveFileDialog                         NO-UNDO.
     DEFINE PRIVATE VARIABLE tempDR                 AS DialogResult                           NO-UNDO.
     DEFINE PRIVATE VARIABLE tempSW                 AS System.IO.StreamWriter                 NO-UNDO.
     DEFINE PRIVATE VARIABLE i_int                  AS INTEGER                                NO-UNDO.
     DEFINE PRIVATE VARIABLE i_count                AS INTEGER                                NO-UNDO.
+    DEFINE PRIVATE VARIABLE c_temp                 AS CHARACTER                              NO-UNDO.
 
     DEFINE PRIVATE VARIABLE Bombs                  AS "System.Windows.Forms.PictureBox[]"    NO-UNDO.
     DEFINE PRIVATE VARIABLE Explosives             AS "System.Windows.Forms.PictureBox[]"    NO-UNDO.
@@ -189,30 +191,30 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
 
         THIS:Character = NEW Actor().
         THIS:Character:ResourceLocation = "C:\OpenEdge\WRK\OOL\NET\2D\TEST_GAME\Resources\".
-        THIS:Character:jump_l  = THIS:Character:LoadFromDir("").
-        THIS:Character:jump_r  = THIS:Character:LoadFromDir("").
-        THIS:Character:stand_l = THIS:Character:LoadFromDir("").
-        THIS:Character:stand_r = THIS:Character:LoadFromDir("").
-        THIS:Character:walk_l  = THIS:Character:LoadFromDir("").
-        THIS:Character:walk_r  = THIS:Character:LoadFromDir("").
+        THIS:Character:jump_l  = THIS:Character:LoadFromDir("jump_l.png").
+        THIS:Character:jump_r  = THIS:Character:LoadFromDir("jump_r.png").
+        THIS:Character:stand_l = THIS:Character:LoadFromDir("stand_l.png").
+        THIS:Character:stand_r = THIS:Character:LoadFromDir("stand_r.png").
+        THIS:Character:walk_l  = THIS:Character:LoadFromDir("walk_l.gif").
+        THIS:Character:walk_r  = THIS:Character:LoadFromDir("walk_r.gif").
 
         THIS:World = NEW World().
         THIS:World:ResourceLocation = THIS:Character:ResourceLocation.
-        THIS:World:Boom     = THIS:World:LoadFromDir("").
-        THIS:World:Bush     = THIS:World:LoadFromDir("").
-        THIS:World:Clouds   = THIS:World:LoadFromDir("").
-        THIS:World:Coin     = THIS:World:LoadFromDir("").
-        THIS:World:Floor    = THIS:World:LoadFromDir("").
-        THIS:World:Pipe     = THIS:World:LoadFromDir("").
-        THIS:World:Platform = THIS:World:LoadFromDir("").
+        THIS:World:Boom     = THIS:World:LoadFromDir("Boom.gif").
+        THIS:World:Bush     = THIS:World:LoadFromDir("Bush.png").
+        THIS:World:Clouds   = THIS:World:LoadFromDir("Clouds.png").
+        THIS:World:Coin     = THIS:World:LoadFromDir("Coin.png").
+        THIS:World:Floor    = THIS:World:LoadFromDir("floor.png").
+        THIS:World:Pipe     = THIS:World:LoadFromDir("Pipe.png").
+        THIS:World:Platform = THIS:World:LoadFromDir("Platform.png").
 
         THIS:Enemy = NEW Enemy().
         THIS:Enemy:ResourceLocation = THIS:Character:ResourceLocation.
-        THIS:Enemy:Bomb        = THIS:Enemy:LoadFromDir("").
-        THIS:Enemy:Enemy_left  = THIS:Enemy:LoadFromDir("").
-        THIS:Enemy:Enemy_right = THIS:Enemy:LoadFromDir("").
-        THIS:Enemy:Rocket_L    = THIS:Enemy:LoadFromDir("").
-        THIS:Enemy:Rocket_R    = THIS:Enemy:LoadFromDir("").
+        THIS:Enemy:Bomb        = THIS:Enemy:LoadFromDir("Bomb.png").
+        THIS:Enemy:Enemy_left  = THIS:Enemy:LoadFromDir("Enemy-left.png").
+        THIS:Enemy:Enemy_right = THIS:Enemy:LoadFromDir("Enemy-right.png").
+        THIS:Enemy:Rocket_L    = THIS:Enemy:LoadFromDir("Rocket_L.png").
+        THIS:Enemy:Rocket_R    = THIS:Enemy:LoadFromDir("Rocket_R.png").
 
         CAST(THIS:pb_NPC2, ISupportInitialize):BeginInit().
         CAST(THIS:pb_NPC1, ISupportInitialize):BeginInit().
@@ -267,7 +269,7 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:offToolStripMenuItem:Text = "Off".
         THIS:offToolStripMenuItem:Click:Subscribe(offToolStripMenuItem_Click).
 
-        THIS:pb_NPC2:Image = Image:FromFile("").
+        THIS:pb_NPC2:Image = THIS:Enemy:Enemy_left.
         THIS:pb_NPC2:Location = NEW Point(38, 64).
         THIS:pb_NPC2:Name = "pb_NPC2".
         THIS:pb_NPC2:Size = NEW Size(20, 20).
@@ -275,7 +277,7 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:pb_NPC2:TabIndex = 10.
         THIS:pb_NPC2:TabStop = FALSE.
 
-        THIS:pb_NPC1:Image = Image:FromFile("").
+        THIS:pb_NPC1:Image = THIS:Enemy:Enemy_right.
         THIS:pb_NPC1:Location = NEW Point(12, 64).
         THIS:pb_NPC1:Name = "pb_NPC1".
         THIS:pb_NPC1:Size = NEW Size(20, 20).
@@ -294,7 +296,7 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:label_Dead:Visible = FALSE.
 
         THIS:pb_Block1:BackColor = Color:Gray.
-        THIS:pb_Block1:BackgroundImage = Image:FromFile("").
+        THIS:pb_Block1:BackgroundImage = THIS:World:Platform.
         THIS:pb_Block1:BorderStyle = BorderStyle:FixedSingle.
         THIS:pb_Block1:Location = NEW Point(451, 182).
         THIS:pb_Block1:Name = "pb_Block1".
@@ -303,7 +305,7 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:pb_Block1:TabStop = FALSE.
 
         THIS:pb_Block2:BackColor = Color:Gray.
-        THIS:pb_Block2:BackgroundImage = Image:FromFile("").
+        THIS:pb_Block2:BackgroundImage = THIS:World:Platform.
         THIS:pb_Block2:BorderStyle = BorderStyle:FixedSingle.
         THIS:pb_Block2:Location = NEW Point(38, 157).
         THIS:pb_Block2:Name = "pb_Block2".
@@ -311,7 +313,7 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:pb_Block2:TabIndex = 7.
         THIS:pb_Block2:TabStop = FALSE.
 
-        THIS:pb_Pipe:BackgroundImage = Image:FromFile("").
+        THIS:pb_Pipe:BackgroundImage = THIS:World:Pipe.
         THIS:pb_Pipe:Location = NEW Point(250, 196).
         THIS:pb_Pipe:Name = "pb_Pipe".
         THIS:pb_Pipe:Size = NEW Size(35, 45).
@@ -380,7 +382,7 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:timerBoomRemove:Enabled = TRUE.
         THIS:timerBoomRemove:Tick:Subscribe(timerBoomRemove_Tick).
 
-        THIS:WorldFloor:BackgroundImage = Image:FromFile("").
+        THIS:WorldFloor:BackgroundImage = THIS:World:Floor.
         THIS:WorldFloor:Controls:Add(THIS:debug_MSpeed).
         THIS:WorldFloor:Controls:Add(THIS:debug_Log).
         THIS:WorldFloor:Controls:Add(THIS:debug_PSpeed).
@@ -510,7 +512,7 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:Controls:Add(THIS:WorldFloor).
         THIS:Controls:Add(THIS:WorldFrame).
         THIS:FormBorderStyle = FormBorderStyle:FixedToolWindow.
-        THIS:Icon = Icon:ExtractAssociatedIcon("").
+//        THIS:Icon = Icon:ExtractAssociatedIcon("").
         THIS:MaximizeBox = FALSE.
         THIS:MinimizeBox = FALSE.
         THIS:Name = "Main".
@@ -562,6 +564,7 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:Speed_Jump     = 3.
         THIS:Speed_Fall     = 3.
         THIS:Score          = 0.
+
     END METHOD.
 
     METHOD PRIVATE VOID onToolStripMenuItem_Click (INPUT sender AS Object,
@@ -891,14 +894,79 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
 
     METHOD PRIVATE VOID timer_BombFailsafe_Tick (INPUT sender AS Object,
                                                  INPUT e      AS EventArgs):
+        THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Bombs - &2&3",
+                                                   DateTime:Now,
+                                                   THIS:BombDebug(),
+                                                   CHR(13) + CHR(10)).
+
+        DO i_int = 1 TO 10:
+            IF VALID-OBJECT(CAST(THIS:Explosives:GetValue(i_int - 1), PictureBox)) THEN
+            DO:
+                CAST(THIS:Explosives:GetValue(i_int - 1), PictureBox):Dispose().
+                THIS:Explosives:SetValue(?, i_int - 1).
+            END.
+            IF VALID-OBJECT(CAST(THIS:Bombs:GetValue(i_int - 1), PictureBox)) THEN
+            DO:
+                CAST(THIS:Bombs:GetValue(i_int - 1), PictureBox):Dispose().
+                THIS:Bombs:SetValue(?, i_int - 1).
+            END.
+        END.
+        THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Had to hard Failsafe&2",
+                                                   DateTime:Now, CHR(13) + CHR(10)).
+        THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Bombs - &2&3",
+                                                   DateTime:Now,
+                                                   THIS:BombDebug(),
+                                                   CHR(13) + CHR(10)).
     END METHOD.
 
     METHOD PRIVATE VOID timer_Sec_Tick (INPUT sender AS Object,
                                         INPUT e      AS EventArgs):
+        DO i_int = 1 TO 10:
+            THIS:tempPictureBox = CAST(THIS:Bombs:GetValue(i_int - 1), PictureBox).
+
+            IF VALID-OBJECT(THIS:tempPictureBox) AND
+               THIS:tempPictureBox:IsDisposed    THEN
+            DO:
+                THIS:Bombs:SetValue(?, i_int - 1).
+            END.
+        END.        
+        THIS:label_Score:Text = "Score: " + STRING(THIS:Score).
+        IF NOT THIS:label_Dead:Visible THEN
+        DO:
+            THIS:Score = THIS:Score + 1.
+            THIS:BombSize = THIS:BombSize + 1.
+            IF THIS:timer_Randombomb:Interval > 1 THEN
+            DO:
+                THIS:timer_Randombomb:Interval = THIS:timer_Randombomb:Interval - 1.
+            END.
+            IF THIS:Score > 123456789 THEN
+            DO:
+                /*Set Highscore here*/
+            END.
+        END.
     END METHOD.
 
     METHOD PRIVATE VOID timerBoomRemove_Tick (INPUT sender AS Object,
                                               INPUT e      AS EventArgs):
+        THIS:tempArray = CAST(THIS:Controls, Array).
+        DO i_int = 1 TO THIS:tempArray:Length:
+            THIS:tempControl = CAST(THIS:tempArray:GetValue(i_int - 1), Control).
+
+            IF THIS:tempControl:GetType() = TypeHelper:GetType("System.Windows.Forms.PictureBox") THEN
+            DO:
+                IF THIS:tempControl:Name = "Boom" THEN
+                DO:
+                    THIS:tempControl:Dispose().
+                END.
+            END.
+        END.
+
+        DO i_int = 1 TO THIS:Explosives:Length:
+            IF VALID-OBJECT(CAST(THIS:Explosives:GetValue(i_int - 1), PictureBox)) THEN
+            DO:
+                CAST(THIS:Explosives:GetValue(i_int - 1), PictureBox):Dispose().
+            END.
+        END.
     END METHOD.
 
     METHOD PRIVATE VOID debug_Log_Click (INPUT sender AS Object,
@@ -976,6 +1044,21 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
 
     METHOD PRIVATE VOID TEST_GAME_Load (INPUT sender AS Object,
                                         INPUT e      AS EventArgs):
+        THIS:Reset().
+        THIS:WorldObjects:SetValue(THIS:pb_Pipe, 0).
+        THIS:WorldObjects:SetValue(THIS:pb_Block1, 1).
+        THIS:WorldObjects:SetValue(THIS:pb_Block2, 2).
+        THIS:DebugMenu:SetValue(THIS:debug_Log, 0).
+        THIS:DebugMenu:SetValue(THIS:debug_Godmode, 1).
+        THIS:DebugMenu:SetValue(THIS:debug_NoBombs, 2).
+        THIS:DebugMenu:SetValue(THIS:debug_PGravity, 3).
+        THIS:DebugMenu:SetValue(THIS:debug_MGravity, 4).
+        THIS:DebugMenu:SetValue(THIS:debug_PJump, 5).
+        THIS:DebugMenu:SetValue(THIS:debug_MJump, 6).
+        THIS:DebugMenu:SetValue(THIS:debug_PSpeed, 7).
+        THIS:DebugMenu:SetValue(THIS:debug_MSpeed, 8).
+        THIS:NPC:SetValue(THIS:pb_NPC1, 0).
+        THIS:NPC:SetValue(THIS:pb_NPC2, 1).
     END METHOD.
 
     METHOD PUBLIC LOGICAL InAirCollision (INPUT tar AS PictureBox):
@@ -1300,5 +1383,21 @@ CLASS TEST_GAME INHERITS Form USE-WIDGET-POOL:
         END.
         THIS:Bombs:SetValue(?, 0).
         RETURN 0.
+    END METHOD.
+
+    METHOD PUBLIC CHARACTER BombDebug ():
+        c_temp = "".
+        DO i_int = 1 TO 10:
+            IF NOT VALID-OBJECT(CAST(THIS:Bombs:GetValue(i_int - 1), PictureBox)) THEN
+            DO:
+                c_temp = c_temp + "0".
+            END.
+            ELSE
+            DO:
+                c_temp = c_temp + "1".
+            END.
+        END.
+
+        RETURN c_temp.
     END METHOD.
 END CLASS.
