@@ -53,6 +53,17 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     END GET.
     PRIVATE SET.
 
+    DEFINE PROTECTED PROPERTY DebugFile  AS CHARACTER GET.
+    PRIVATE SET.
+
+    DEFINE PROTECTED PROPERTY DebugLog   AS CHARACTER GET.
+    PRIVATE SET(INPUT cip_longchar AS CHARACTER):
+        OUTPUT TO VALUE(THIS:DebugFile) APPEND.
+            PUT UNFORMATTED cip_longchar.
+        OUTPUT CLOSE.
+        THIS:DebugLog = "".
+    END SET.
+
     DEFINE PRIVATE VARIABLE graphics               AS Graphics                               NO-UNDO.
     DEFINE PRIVATE VARIABLE components             AS IContainer                             NO-UNDO.
     DEFINE PRIVATE VARIABLE resources              AS ComponentResourceManager               NO-UNDO.
@@ -100,6 +111,7 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     DEFINE PRIVATE VARIABLE tempSW                 AS System.IO.StreamWriter                 NO-UNDO.
     DEFINE PRIVATE VARIABLE i_int                  AS INTEGER                                NO-UNDO.
     DEFINE PRIVATE VARIABLE i_count                AS INTEGER                                NO-UNDO.
+    DEFINE PRIVATE VARIABLE i_set                  AS INTEGER                                NO-UNDO.
     DEFINE PRIVATE VARIABLE c_temp                 AS CHARACTER                              NO-UNDO.
 
     DEFINE PRIVATE VARIABLE Bombs                  AS "System.Windows.Forms.PictureBox[]"    NO-UNDO.
@@ -115,9 +127,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     DEFINE PRIVATE VARIABLE GameOn                 AS LOGICAL                                NO-UNDO.
     DEFINE PRIVATE VARIABLE GodMode                AS LOGICAL                                NO-UNDO.
     DEFINE PRIVATE VARIABLE Debug                  AS LOGICAL                                NO-UNDO.
-    DEFINE PRIVATE VARIABLE DebugLog               AS CHARACTER                              NO-UNDO.
+    //DEFINE PRIVATE VARIABLE DebugLog               AS LONGCHAR                               NO-UNDO.
     DEFINE PRIVATE VARIABLE Gravity                AS INTEGER                                NO-UNDO.
-    DEFINE PRIVATE VARIABLE Anim                   AS INTEGER                                NO-UNDO.
+    DEFINE PRIVATE VARIABLE Anim                   AS INT64                                  NO-UNDO.
     DEFINE PRIVATE VARIABLE Force                  AS INTEGER                                NO-UNDO.
     DEFINE PRIVATE VARIABLE BombSize               AS INTEGER                                NO-UNDO.
     DEFINE PRIVATE VARIABLE Speed_Movement         AS INTEGER                                NO-UNDO.
@@ -127,6 +139,11 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
 
     DEFINE PRIVATE VARIABLE r                      AS INTEGER                                NO-UNDO.
     DEFINE PRIVATE VARIABLE NextSpot               AS INTEGER                                NO-UNDO.
+    DEFINE PRIVATE VARIABLE npcTemp                AS PictureBox                             NO-UNDO.
+    DEFINE PRIVATE VARIABLE Bomb                   AS PictureBox                             NO-UNDO.
+    DEFINE PRIVATE VARIABLE Boom                   AS PictureBox                             NO-UNDO.
+    DEFINE PRIVATE VARIABLE Obj1                   AS PictureBox                             NO-UNDO.
+    DEFINE PRIVATE VARIABLE Obj2                   AS PictureBox                             NO-UNDO.
     DEFINE PRIVATE VARIABLE pb                     AS PictureBox                             NO-UNDO.
     DEFINE PRIVATE VARIABLE Coin                   AS PictureBox                             NO-UNDO.
     DEFINE PRIVATE VARIABLE pbR                    AS PictureBox                             NO-UNDO.
@@ -151,6 +168,8 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     END DESTRUCTOR.
 
     METHOD PRIVATE VOID InitializeComponent ():
+        THIS:DebugFile = "C:\OpenEdge\WRK\OOL\NET\2D\TEST_GAME\Debug\TEST_GAME.cls-" + STRING(TIME) + "_" + STRING(ETIME) + ".txt".
+
         THIS:SuspendLayout().
 
         THIS:components = NEW Container().
@@ -188,7 +207,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:debug_PJump            = NEW Label().
         THIS:debug_PGravity         = NEW Label().
         THIS:debug_MGravity         = NEW Label().
-
+        //
+        // Character Resources
+        //
         THIS:Character = NEW Actor().
         THIS:Character:ResourceLocation = "C:\OpenEdge\WRK\OOL\NET\2D\TEST_GAME\Resources\".
         THIS:Character:jump_l  = THIS:Character:LoadFromDir("jump_l.png").
@@ -197,7 +218,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:Character:stand_r = THIS:Character:LoadFromDir("stand_r.png").
         THIS:Character:walk_l  = THIS:Character:LoadFromDir("walk_l.gif").
         THIS:Character:walk_r  = THIS:Character:LoadFromDir("walk_r.gif").
-
+        //
+        // World Resources
+        //
         THIS:World = NEW World().
         THIS:World:ResourceLocation = THIS:Character:ResourceLocation.
         THIS:World:Boom     = THIS:World:LoadFromDir("Boom.gif").
@@ -207,7 +230,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:World:Floor    = THIS:World:LoadFromDir("floor.png").
         THIS:World:Pipe     = THIS:World:LoadFromDir("Pipe.png").
         THIS:World:Platform = THIS:World:LoadFromDir("Platform.png").
-
+        //
+        // Enemy Resources
+        //
         THIS:Enemy = NEW Enemy().
         THIS:Enemy:ResourceLocation = THIS:Character:ResourceLocation.
         THIS:Enemy:Bomb        = THIS:Enemy:LoadFromDir("Bomb.png").
@@ -222,7 +247,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         CAST(THIS:pb_Block2, ISupportInitialize):BeginInit().
         CAST(THIS:pb_Pipe, ISupportInitialize):BeginInit().
         CAST(THIS:pb_Player, ISupportInitialize):BeginInit().
-
+        //
+        // WorldFrame
+        //
         THIS:WorldFrame:BackColor = Color:SkyBlue.
         THIS:WorldFrame:BackgroundImageLayout = ImageLayout:Stretch.
         THIS:WorldFrame:ContextMenuStrip = THIS:contextMenuStrip1.
@@ -238,37 +265,53 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:WorldFrame:Controls:Add(THIS:pb_Player).
         THIS:WorldFrame:Dock = DockStyle:Top.
         THIS:WorldFrame:Location = NEW Point(0, 0).
+        THIS:WorldFrame:Name = "World Frame".
         THIS:WorldFrame:Size = NEW Size(656, 241).
         THIS:WorldFrame:TabIndex = 0.
-
+        //
+        // Creating an array instance to populate menus with tool strip items
+        // since the AddRange method only accepts ToolStripItem[] datatype
+        //
         THIS:tempToolStr = CAST(Array:CreateInstance(TypeHelper:GetType("System.Windows.Forms.ToolStripItem"), 1),
                                 "System.Windows.Forms.ToolStripItem[]").
         THIS:tempToolStr:SetValue(THIS:debugToolStripMenuItem, 0).
-
+        //
+        // contextMenuStrip1
+        //
         THIS:contextMenuStrip1:Items:AddRange(THIS:tempToolStr).
         THIS:contextMenuStrip1:Name = "contextMenuStrip1".
         THIS:contextMenuStrip1:Size = NEW Size(110, 26).
-
+        //
+        // Array for AddRange method
+        //
         THIS:tempToolStr = CAST(Array:CreateInstance(TypeHelper:GetType("System.Windows.Forms.ToolStripItem"), 2),
                                 "System.Windows.Forms.ToolStripItem[]").
         THIS:tempToolStr:SetValue(THIS:onToolStripMenuItem, 0).
         THIS:tempToolStr:SetValue(THIS:offToolStripMenuItem, 1).
-
+        //
+        // debugToolStripMenuItem
+        //
         THIS:debugToolStripMenuItem:DropDownItems:AddRange(THIS:tempToolStr).
         THIS:debugToolStripMenuItem:Name = "debugToolStripMenuItem".
         THIS:debugToolStripMenuItem:Size = NEW Size(109, 22).
         THIS:debugToolStripMenuItem:Text = "Debug".
-
+        //
+        // onToolStripMenuItem
+        //
         THIS:onToolStripMenuItem:Name = "onToolStripMenuItem".
         THIS:onToolStripMenuItem:Size = NEW Size(91, 22).
         THIS:onToolStripMenuItem:Text = "On".
         THIS:onToolStripMenuItem:Click:Subscribe(onToolStripMenuItem_Click).
-
+        //
+        // offToolStripMenuItem
+        //
         THIS:offToolStripMenuItem:Name = "offToolStripMenuItem".
         THIS:offToolStripMenuItem:Size = NEW Size(91, 22).
         THIS:offToolStripMenuItem:Text = "Off".
         THIS:offToolStripMenuItem:Click:Subscribe(offToolStripMenuItem_Click).
-
+        //
+        // pb_NPC2
+        //
         THIS:pb_NPC2:Image = THIS:Enemy:Enemy_left.
         THIS:pb_NPC2:Location = NEW Point(38, 64).
         THIS:pb_NPC2:Name = "pb_NPC2".
@@ -276,7 +319,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:pb_NPC2:SizeMode = PictureBoxSizeMode:StretchImage.
         THIS:pb_NPC2:TabIndex = 10.
         THIS:pb_NPC2:TabStop = FALSE.
-
+        //
+        // pb_NPC1
+        //
         THIS:pb_NPC1:Image = THIS:Enemy:Enemy_right.
         THIS:pb_NPC1:Location = NEW Point(12, 64).
         THIS:pb_NPC1:Name = "pb_NPC1".
@@ -284,7 +329,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:pb_NPC1:SizeMode = PictureBoxSizeMode:StretchImage.
         THIS:pb_NPC1:TabIndex = 9.
         THIS:pb_NPC1:TabStop = FALSE.
-
+        //
+        // label_Dead
+        //
         THIS:label_Dead:AutoSize = TRUE.
         THIS:label_Dead:BackColor = Color:Transparent.
         THIS:label_Dead:Font = NEW Font("Consolas", 8.25, FontStyle:Bold, GraphicsUnit:Point).
@@ -294,7 +341,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:label_Dead:TabIndex = 1.
         THIS:label_Dead:Text = "You died, press Space to start".
         THIS:label_Dead:Visible = FALSE.
-
+        //
+        // pb_Block1
+        //
         THIS:pb_Block1:BackColor = Color:Gray.
         THIS:pb_Block1:BackgroundImage = THIS:World:Platform.
         THIS:pb_Block1:BorderStyle = BorderStyle:FixedSingle.
@@ -303,7 +352,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:pb_Block1:Size = NEW Size(151, 24).
         THIS:pb_Block1:TabIndex = 8.
         THIS:pb_Block1:TabStop = FALSE.
-
+        //
+        // pb_Block2
+        //
         THIS:pb_Block2:BackColor = Color:Gray.
         THIS:pb_Block2:BackgroundImage = THIS:World:Platform.
         THIS:pb_Block2:BorderStyle = BorderStyle:FixedSingle.
@@ -312,14 +363,18 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:pb_Block2:Size = NEW Size(135, 24).
         THIS:pb_Block2:TabIndex = 7.
         THIS:pb_Block2:TabStop = FALSE.
-
+        //
+        // pb_Pipe
+        //
         THIS:pb_Pipe:BackgroundImage = THIS:World:Pipe.
         THIS:pb_Pipe:Location = NEW Point(250, 196).
         THIS:pb_Pipe:Name = "pb_Pipe".
         THIS:pb_Pipe:Size = NEW Size(35, 45).
         THIS:pb_Pipe:TabIndex = 5.
         THIS:pb_Pipe:TabStop = FALSE.
-
+        //
+        // label2
+        //
         THIS:label2:AutoSize = TRUE.
         THIS:label2:BackColor = Color:Transparent.
         THIS:label2:Font = NEW Font("Consolas", 8.25, Fontstyle:Bold).
@@ -328,16 +383,20 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:label2:Size = NEW Size(79, 13).
         THIS:label2:TabIndex = 3.
         THIS:label2:Text = "Highscore: 0".
-
+        //
+        // label1
+        //
         THIS:label1:AutoSize = TRUE.
         THIS:label1:BackColor = Color:Transparent.
-        THIS:label1:Font = NEW Font("Consolas", 8.25, FontStyle:Bold, GraphicsUnit:Point).
-        THIS:label1:Location = NEW Point(4, 35).
+        THIS:label1:Font = NEW Font("Consolas", 8.25, FontStyle:Bold).
+        THIS:label1:Location = NEW Point(4, 38).
         THIS:label1:Name = "label1".
         THIS:label1:Size = NEW Size(49, 13).
         THIS:label1:TabIndex = 3.
         THIS:label1:Text = "Bombs: ".
-
+        //
+        // label_Score
+        //
         THIS:label_Score:AutoSize = TRUE.
         THIS:label_Score:BackColor = Color:Transparent.
         THIS:label_Score:Font = NEW Font("Consolas", 8.25, FontStyle:Bold, GraphicsUnit:Point).
@@ -346,7 +405,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:label_Score:Size = NEW Size(55, 13).
         THIS:label_Score:TabIndex = 2.
         THIS:label_Score:Text = "Score: 0".
-
+        //
+        // pb_Player
+        //
         THIS:pb_Player:BackColor = Color:Transparent.
         THIS:pb_Player:Image = THIS:Character:stand_r.
         THIS:pb_Player:Location = NEW Point(12, 94).
@@ -354,34 +415,50 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:pb_Player:Size = NEW Size(16, 32).
         THIS:pb_Player:TabIndex = 0.
         THIS:pb_Player:TabStop = FALSE.
-
+        //
+        // timer_Gravity
+        //
         THIS:timer_Gravity:Enabled = TRUE.
         THIS:timer_Gravity:Interval = 1.
         THIS:timer_Gravity:Tick:Subscribe(timer_Gravity_Tick).
-
+        //
+        // timer_Jump
+        //
         THIS:timer_Jump:Enabled = TRUE.
         THIS:timer_Jump:Interval = 1.
         THIS:timer_Jump:Tick:Subscribe(timer_Jump_Tick).
-
+        //
+        // timer_Anim
+        //
         THIS:timer_Anim:Enabled = TRUE.
         THIS:timer_Anim:Interval = 1.
         THIS:timer_Anim:Tick:Subscribe(timer_Anim_Tick).
-
+        //
+        // timer_Randombomb
+        //
         THIS:timer_Randombomb:Enabled = TRUE.
         THIS:timer_Randombomb:Interval = 800.
         THIS:timer_Randombomb:Tick:Subscribe(timer_Randombomb_Tick).
-
+        //
+        // timer_BombFailsafe
+        //
         THIS:timer_BombFailsafe:Enabled = TRUE.
         THIS:timer_BombFailsafe:Interval = 3000.
         THIS:timer_BombFailsafe:Tick:Subscribe(timer_BombFailsafe_Tick).
-
+        //
+        // timer_Sec
+        //
         THIS:timer_Sec:Enabled = TRUE.
         THIS:timer_Sec:Interval = 1000.
         THIS:timer_Sec:Tick:Subscribe(timer_Sec_Tick).
-
+        //
+        // timerBoomRemove
+        //
         THIS:timerBoomRemove:Enabled = TRUE.
         THIS:timerBoomRemove:Tick:Subscribe(timerBoomRemove_Tick).
-
+        //
+        // WorldFloor
+        //
         THIS:WorldFloor:BackgroundImage = THIS:World:Floor.
         THIS:WorldFloor:Controls:Add(THIS:debug_MSpeed).
         THIS:WorldFloor:Controls:Add(THIS:debug_Log).
@@ -397,7 +474,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:WorldFloor:Name = "WorldFloor".
         THIS:WorldFloor:Size = NEW Size(656, 32).
         THIS:WorldFloor:TabIndex = 1.
-
+        //
+        // debug_MSpeed
+        //
         THIS:debug_MSpeed:AutoSize = TRUE.
         THIS:debug_MSpeed:BackColor = Color:Transparent.
         THIS:debug_MSpeed:Font = NEW Font("Consolas", 8.25, FontStyle:Bold).
@@ -409,7 +488,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:debug_MSpeed:Text = "[- Speed]".
         THIS:debug_MSpeed:Visible = FALSE.
         THIS:debug_MSpeed:Click:Subscribe(debug_MSpeed_Click).
-
+        //
+        // debug_Log
+        //
         THIS:debug_Log:AutoSize = TRUE.
         THIS:debug_Log:BackColor = Color:Transparent.
         THIS:debug_Log:Font = NEW Font("Consolas", 8.25, FontStyle:Bold).
@@ -421,7 +502,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:debug_Log:Text = "[Debug log]".
         THIS:debug_Log:Visible = FALSE.
         THIS:debug_Log:Click:Subscribe(debug_Log_Click).
-
+        //
+        // debug_PSpeed
+        //
         THIS:debug_PSpeed:AutoSize = TRUE.
         THIS:debug_PSpeed:BackColor = Color:Transparent.
         THIS:debug_PSpeed:Font = NEW Font("Consolas", 8.25, FontStyle:Bold).
@@ -433,7 +516,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:debug_PSpeed:Text = "[+ Speed]".
         THIS:debug_PSpeed:Visible = FALSE.
         THIS:debug_PSpeed:Click:Subscribe(debug_PSpeed_Click).
-
+        //
+        // debug_Godmode
+        //
         THIS:debug_Godmode:AutoSize = TRUE.
         THIS:debug_Godmode:BackColor = Color:Transparent.
         THIS:debug_Godmode:Font = NEW Font("Consolas", 8.25, FontStyle:Bold).
@@ -445,7 +530,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:debug_Godmode:Text = "[Toggle Godmode]".
         THIS:debug_Godmode:Visible = FALSE.
         THIS:debug_Godmode:Click:Subscribe(debug_Godmode_Click).
-
+        //
+        // debug_MJump
+        //
         THIS:debug_MJump:AutoSize = TRUE.
         THIS:debug_MJump:BackColor = Color:Transparent.
         THIS:debug_MJump:Font = NEW Font("Consolas", 8.25, FontStyle:Bold).
@@ -457,7 +544,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:debug_MJump:Text = "[- Jump]".
         THIS:debug_MJump:Visible = FALSE.
         THIS:debug_MJump:Click:Subscribe(debug_MJump_Click).
-
+        //
+        // debug_NoBombs
+        //
         THIS:debug_NoBombs:AutoSize = TRUE.
         THIS:debug_NoBombs:BackColor = Color:Transparent.
         THIS:debug_NoBombs:Font = NEW Font("Consolas", 8.25, FontStyle:Bold).
@@ -469,7 +558,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:debug_NoBombs:Text = "[No bombs]".
         THIS:debug_NoBombs:Visible = FALSE.
         THIS:debug_NoBombs:Click:Subscribe(debug_NoBombs_Click).
-
+        //
+        // debug_PJump
+        //
         THIS:debug_PJump:AutoSize = TRUE.
         THIS:debug_PJump:BackColor = Color:Transparent.
         THIS:debug_PJump:Font = NEW Font("Consolas", 8.25, FontStyle:Bold).
@@ -481,7 +572,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:debug_PJump:Text = "[+ Jump]".
         THIS:debug_PJump:Visible = FALSE.
         THIS:debug_PJump:Click:Subscribe(debug_PJump_Click).
-
+        //
+        // debug_PGravity
+        //
         THIS:debug_PGravity:AutoSize = TRUE.
         THIS:debug_PGravity:BackColor = Color:Transparent.
         THIS:debug_PGravity:Font = NEW Font("Consolas", 8.25, FontStyle:Bold).
@@ -493,7 +586,9 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:debug_PGravity:Text = "[+ Gravity]".
         THIS:debug_PGravity:Visible = FALSE.
         THIS:debug_PGravity:Click:Subscribe(debug_PGravity_Click).
-
+        //
+        // debug_MGravity
+        //
         THIS:debug_MGravity:AutoSize = TRUE.
         THIS:debug_MGravity:BackColor = Color:Transparent.
         THIS:debug_MGravity:Font = NEW Font("Consolas", 8.25, FontStyle:Bold).
@@ -532,6 +627,8 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:ResumeLayout(FALSE).
         THIS:PerformLayout().
 
+        // Defining some global control array variables here They will hold instances of objects that are
+        // created periodically throughout the game
         THIS:Bombs        = CAST(Array:CreateInstance(TypeHelper:GetType("System.Windows.Forms.PictureBox"), 10),
                                  "System.Windows.Forms.PictureBox[]").
         THIS:Explosives   = CAST(Array:CreateInstance(TypeHelper:GetType("System.Windows.Forms.PictureBox"), 10),
@@ -570,7 +667,7 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     METHOD PRIVATE VOID onToolStripMenuItem_Click (INPUT sender AS Object,
                                                    INPUT e      AS EventArgs):
         DO i_int = 1 TO THIS:DebugMenu:Length:
-            THIS:tempControl = CAST(THIS:DebugMenu:GetValue(i_int), Control).
+            THIS:tempControl = CAST(THIS:DebugMenu:GetValue(i_int - 1), Control).
             THIS:tempControl:Visible = TRUE.
         END.
     END METHOD.
@@ -578,7 +675,7 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     METHOD PRIVATE VOID offToolStripMenuItem_Click (INPUT sender AS Object,
                                                     INPUT e      AS EventArgs):
         DO i_int = 1 TO THIS:DebugMenu:Length:
-            THIS:tempControl = CAST(THIS:DebugMenu:GetValue(i_int), Control).
+            THIS:tempControl = CAST(THIS:DebugMenu:GetValue(i_int - 1), Control).
             THIS:tempControl:Visible = FALSE.
         END.
     END METHOD.
@@ -602,58 +699,67 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         IF THIS:GameOn THEN
         DO:
             DO i_int = 1 TO THIS:Bombs:Length:
-                ASSIGN THIS:tempPictureBox = CAST(THIS:Bombs:GetValue(i_int), PictureBox).
+                ASSIGN THIS:Bomb = CAST(THIS:Bombs:GetValue(i_int - 1), PictureBox).
 
-                IF VALID-OBJECT(THIS:tempPictureBox) THEN
+                IF VALID-OBJECT(THIS:Bomb) THEN
                 DO:
-                    IF NOT THIS:OutsideWorldFrame(THIS:tempPictureBox) THEN
+                    IF NOT THIS:OutsideWorldFrame(THIS:Bomb) THEN
                     DO:
-                        IF THIS:tempPictureBox:Name = "pb" OR THIS:tempPictureBox:Name = "Coin" THEN
+                        IF THIS:Bomb:Name = "pb" OR THIS:Bomb:Name = "Coin" THEN
                         DO:
-                            THIS:tempPictureBox:Top = THIS:tempPictureBox:Top + 3.
+                            THIS:Bomb:Top = THIS:Bomb:Top + 3.
                         END.
-                        IF THIS:tempPictureBox:Name = "pbR" THEN
+                        ELSE
+                        IF THIS:Bomb:Name = "pbR" THEN
                         DO:
-                            THIS:tempPictureBox:Left = THIS:tempPictureBox:Left + 3.
+                            THIS:Bomb:Left = THIS:Bomb:Left + 3.
                         END.
-                        IF THIS:tempPictureBox:Name = "pbL" THEN
+                        ELSE
+                        IF THIS:Bomb:Name = "pbL" THEN
                         DO:
-                            THIS:tempPictureBox:Left = THIS:tempPictureBox:Left - 3.
+                            THIS:Bomb:Left = THIS:Bomb:Left - 3.
+                        END.
+                        ELSE
+                        DO:
+                            THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1 Error: Unkown bomb name '&2'&3",
+                                                                       DateTime:Now,
+                                                                       THIS:Bomb:Name,
+                                                                       CHR(13) + CHR(10)).
                         END.
                     END.
                     ELSE
                     DO:
-                        IF THIS:OutsideWorldFrame(THIS:tempPictureBox) THEN
+                        IF THIS:OutsideWorldFrame(THIS:Bomb) THEN
                         DO:
+                            THIS:Bomb:Dispose().
                             THIS:Bombs:SetValue(?, i_count).
-                            THIS:tempPictureBox:Dispose().
                             THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Removed rocket at &2&3",
-                                                                    DateTime:Now,
-                                                                    i_count,
-                                                                    CHR(13) + CHR(10)).
+                                                                       DateTime:Now,
+                                                                       i_count,
+                                                                       CHR(13) + CHR(10)).
                         END.
-                        IF THIS:OutsideWorldFrame(THIS:tempPictureBox) THEN
+                        IF THIS:OutsideWorldFrame(THIS:Bomb) THEN
                         DO:
+                            THIS:Bomb:Dispose().
                             THIS:Bombs:SetValue(?, i_count).
-                            THIS:tempPictureBox:Dispose().
                             THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Removed rocket at &2&3",
-                                                                    DateTime:Now,
-                                                                    i_count,
-                                                                    CHR(13) + CHR(10)).
+                                                                       DateTime:Now,
+                                                                       i_count,
+                                                                       CHR(13) + CHR(10)).
                         END.
+                        THIS:Bomb:Dispose().
                         THIS:Bombs:SetValue(?, i_count).
-                        THIS:tempPictureBox:Dispose().
                         THIS:DebugLog = THIS:DebugLog + SUBSTITUTE("&1: Removed bomb at &2&3",
-                                                                DateTime:Now,
-                                                                i_count,
-                                                                CHR(13) + CHR(10)).
+                                                                   DateTime:Now,
+                                                                   i_count,
+                                                                   CHR(13) + CHR(10)).
                         
                         IF VALID-OBJECT(CAST(THIS:Explosives:GetValue(0), PictureBox)) THEN
                         DO:
                             CAST(THIS:Explosives:GetValue(0), PictureBox):Dispose().
                             THIS:Explosives:SetValue(?, 0).
                         END.
-                        THIS:CreateBoom(THIS:tempPictureBox:Location:X, THIS:tempPictureBox:Location:Y).
+                        THIS:CreateBoom(THIS:Bomb:Location:X, THIS:Bomb:Location:Y).
                     END.
                 END.
 
@@ -721,51 +827,51 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         END.
 
         DO i_int = 1 TO THIS:Bombs:Length:
-            THIS:tempPictureBox = CAST(THIS:Bombs:GetValue(i_int), PictureBox).
+            THIS:Bomb = CAST(THIS:Bombs:GetValue(i_int - 1), PictureBox).
 
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            IF VALID-OBJECT(THIS:Bomb) THEN
             DO:
-                IF THIS:pb_Player:Bounds:IntersectsWith(THIS:tempPictureBox:Bounds) THEN
+                IF THIS:pb_Player:Bounds:IntersectsWith(THIS:Bomb:Bounds) THEN
                 DO:
-                    IF THIS:tempPictureBox:Name = "Coin" THEN
+                    IF THIS:Bomb:Name = "Coin" THEN
                     DO:
                         THIS:Score = THIS:Score + 1.
-                        THIS:tempPictureBox:Dispose().
+                        THIS:Bomb:Dispose().
                     END.
                     ELSE
                     DO:
                         THIS:Dead().
-                        THIS:tempPictureBox:Dispose().
+                        THIS:Bomb:Dispose().
                     END.
                 END.
             END.
         END.
 
         DO i_int = 1 TO THIS:NPC:Length:
-            THIS:tempPictureBox = CAST(THIS:NPC:GetValue(i_int), PictureBox).
+            THIS:npcTemp = CAST(THIS:NPC:GetValue(i_int - 1), PictureBox).
 
-            IF THIS:tempPictureBox:Bounds:IntersectsWith(THIS:pb_Player:Bounds) THEN
+            IF THIS:npcTemp:Bounds:IntersectsWith(THIS:pb_Player:Bounds) THEN
             DO:
                 THIS:Dead().
             END.
             ELSE
             DO:
-                IF THIS:tempPictureBox:Location:X > THIS:pb_Player:Location:X AND
-                   THIS:tempPictureBox:Location:X < THIS:WorldFrame:Width     AND
-                   NOT THIS:Collision_Right(THIS:tempPictureBox)              AND
+                IF THIS:npcTemp:Location:X > THIS:pb_Player:Location:X AND
+                   THIS:npcTemp:Location:X < THIS:WorldFrame:Width     AND
+                   NOT THIS:Collision_Right(THIS:npcTemp)              AND
                    THIS:GameOn                                                THEN
                 DO:
-                    THIS:tempPictureBox:Left  = THIS:tempPictureBox:Left - 1.
-                    THIS:tempPictureBox:Image = THIS:Enemy:Enemy_left.
+                    THIS:npcTemp:Left  = THIS:npcTemp:Left - 1.
+                    THIS:npcTemp:Image = THIS:Enemy:Enemy_left.
                 END.
 
-                IF THIS:tempPictureBox:Location:X < THIS:pb_Player:Location:X AND
-                   THIS:tempPictureBox:Location:X > 0                         AND
-                   NOT THIS:Collision_Left(THIS:tempPictureBox)               AND
+                IF THIS:npcTemp:Location:X < THIS:pb_Player:Location:X AND
+                   THIS:npcTemp:Location:X > 0                         AND
+                   NOT THIS:Collision_Left(THIS:npcTemp)               AND
                    THIS:GameOn                                                THEN
                 DO:
-                    THIS:tempPictureBox:Left  = THIS:tempPictureBox:Left + 1.
-                    THIS:tempPictureBox:Image = THIS:Enemy:Enemy_right.
+                    THIS:npcTemp:Left  = THIS:npcTemp:Left + 1.
+                    THIS:npcTemp:Image = THIS:Enemy:Enemy_right.
                 END.
             END.
         END.
@@ -922,10 +1028,8 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     METHOD PRIVATE VOID timer_Sec_Tick (INPUT sender AS Object,
                                         INPUT e      AS EventArgs):
         DO i_int = 1 TO 10:
-            THIS:tempPictureBox = CAST(THIS:Bombs:GetValue(i_int - 1), PictureBox).
-
-            IF VALID-OBJECT(THIS:tempPictureBox) AND
-               THIS:tempPictureBox:IsDisposed    THEN
+            IF VALID-OBJECT(CAST(THIS:Bombs:GetValue(i_int - 1), PictureBox)) AND
+               CAST(THIS:Bombs:GetValue(i_int - 1), PictureBox):IsDisposed    THEN
             DO:
                 THIS:Bombs:SetValue(?, i_int - 1).
             END.
@@ -948,6 +1052,7 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
 
     METHOD PRIVATE VOID timerBoomRemove_Tick (INPUT sender AS Object,
                                               INPUT e      AS EventArgs):
+        /*
         THIS:tempArray = CAST(THIS:Controls, Array).
         DO i_int = 1 TO THIS:tempArray:Length:
             THIS:tempControl = CAST(THIS:tempArray:GetValue(i_int - 1), Control).
@@ -960,7 +1065,7 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
                 END.
             END.
         END.
-
+        */
         DO i_int = 1 TO THIS:Explosives:Length:
             IF VALID-OBJECT(CAST(THIS:Explosives:GetValue(i_int - 1), PictureBox)) THEN
             DO:
@@ -1061,12 +1166,12 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:NPC:SetValue(THIS:pb_NPC2, 1).
     END METHOD.
 
-    METHOD PUBLIC LOGICAL InAirCollision (INPUT tar AS PictureBox):
+    METHOD PUBLIC LOGICAL InAirNoCollision (INPUT tar AS PictureBox):
         IF NOT THIS:OutSideWorldFrame(tar) THEN
-        DO i_int = 1 TO THIS:WorldObjects:Length:
-            THIS:tempPictureBox = CAST(THIS:WorldObjects:GetValue(i_int), PictureBox).
+        DO i_set = 1 TO THIS:WorldObjects:Length:
+            THIS:Obj1 = CAST(THIS:WorldObjects:GetValue(i_set - 1), PictureBox).
 
-            IF NOT tar:Bounds:IntersectsWith(THIS:tempPictureBox:Bounds) THEN
+            IF NOT tar:Bounds:IntersectsWith(THIS:Obj1:Bounds) THEN
             DO:
                 IF tar:Location:Y < THIS:WorldFrame:Width THEN RETURN TRUE.
             END.
@@ -1082,24 +1187,24 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         IF tar:Location:Y + tar:Height > THIS:WorldFrame:Height - 3 THEN
             RETURN TRUE.
 
-        DO i_int = 1 TO THIS:WorldObjects:Length:
-            ASSIGN THIS:tempPictureBox = CAST(THIS:WorldObjects:GetValue(i_int), PictureBox).
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+        DO i_set = 1 TO THIS:WorldObjects:Length:
+            ASSIGN THIS:Obj2 = CAST(THIS:WorldObjects:GetValue(i_set - 1), PictureBox).
+            IF VALID-OBJECT(THIS:Obj2) THEN
             DO:
-                IF tar:Bounds:IntersectsWith(THIS:tempPictureBox:Bounds) THEN RETURN TRUE.
+                IF tar:Bounds:IntersectsWith(THIS:Obj2:Bounds) THEN RETURN TRUE.
             END.
         END.
         RETURN FALSE.
     END METHOD.
 
     METHOD PUBLIC LOGICAL Collision_Top (INPUT tar AS PictureBox):
-        DO i_int = 1 TO THIS:WorldObjects:Length:
-            THIS:tempPictureBox = CAST(THIS:WorldObjects:GetValue(i_int), PictureBox).
+        DO i_set = 1 TO THIS:WorldObjects:Length:
+            THIS:Obj1 = CAST(THIS:WorldObjects:GetValue(i_set - 1), PictureBox).
 
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            IF VALID-OBJECT(THIS:Obj1) THEN
             DO:
                 THIS:temp1 = NEW PictureBox().
-                THIS:temp1:Bounds = THIS:tempPictureBox:Bounds.
+                THIS:temp1:Bounds = THIS:Obj1:Bounds.
                 THIS:temp1:SetBounds(THIS:temp1:Location:X - 3, THIS:temp1:Location:Y - 1, THIS:temp1:Width + 6, 1).
 
                 IF tar:Bounds:IntersectsWith(THIS:temp1:Bounds) THEN RETURN TRUE.
@@ -1109,13 +1214,13 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     END METHOD.
 
     METHOD PUBLIC LOGICAL Collision_Bottom (INPUT tar AS PictureBox):
-        DO i_int = 1 TO THIS:WorldObjects:Length:
-            THIS:tempPictureBox = CAST(THIS:WorldObjects:GetValue(i_int), PictureBox).
+        DO i_set = 1 TO THIS:WorldObjects:Length:
+            THIS:Obj1 = CAST(THIS:WorldObjects:GetValue(i_set - 1), PictureBox).
 
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            IF VALID-OBJECT(THIS:Obj1) THEN
             DO:
                 THIS:temp1 = NEW PictureBox().
-                THIS:temp1:Bounds = THIS:tempPictureBox:Bounds.
+                THIS:temp1:Bounds = THIS:Obj1:Bounds.
                 THIS:temp1:SetBounds(THIS:temp1:Location:X, THIS:temp1:Location:Y + THIS:temp1:Height, THIS:temp1:Width, 1).
 
                 IF tar:Bounds:IntersectsWith(THIS:temp1:Bounds) THEN RETURN TRUE.
@@ -1125,13 +1230,13 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     END METHOD.
 
     METHOD PUBLIC LOGICAL Collision_Left (INPUT tar AS PictureBox):
-        DO i_int = 1 TO THIS:WorldObjects:Length:
-            ASSIGN THIS:tempPictureBox = CAST(THIS:WorldObjects:GetValue(i_int), PictureBox).
+        DO i_set = 1 TO THIS:WorldObjects:Length:
+            ASSIGN THIS:Obj1 = CAST(THIS:WorldObjects:GetValue(i_set - 1), PictureBox).
 
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            IF VALID-OBJECT(THIS:Obj1) THEN
             DO:
                 THIS:temp1 = NEW PictureBox().
-                THIS:temp1:Bounds = THIS:tempPictureBox:Bounds.
+                THIS:temp1:Bounds = THIS:Obj1:Bounds.
                 THIS:temp1:SetBounds(THIS:temp1:Location:X - 1, THIS:temp1:Location:Y + 1, 1, THIS:temp1:Height - 1).
 
                 IF tar:Bounds:IntersectsWith(THIS:temp1:Bounds) THEN RETURN TRUE.
@@ -1141,13 +1246,13 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     END METHOD.
 
     METHOD PUBLIC LOGICAL Collision_Right (INPUT tar AS PictureBox):
-        DO i_int = 1 TO THIS:WorldObjects:Length:
-            THIS:tempPictureBox = CAST(THIS:WorldObjects:GetValue(i_int), PictureBox).
+        DO i_set = 1 TO THIS:WorldObjects:Length:
+            THIS:Obj1 = CAST(THIS:WorldObjects:GetValue(i_set - 1), PictureBox).
 
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            IF VALID-OBJECT(THIS:Obj1) THEN
             DO:
                 THIS:temp1 = NEW PictureBox().
-                THIS:temp1:Bounds = THIS:tempPictureBox:Bounds.
+                THIS:temp1:Bounds = THIS:Obj1:Bounds.
                 THIS:temp1:SetBounds(THIS:temp1:Location:X + THIS:temp1:Width, THIS:temp1:Location:Y + 1, 1, THIS:temp1:Height - 1).
 
                 IF tar:Bounds:IntersectsWith(THIS:temp1:Bounds) THEN RETURN TRUE.
@@ -1168,12 +1273,12 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     METHOD PUBLIC VOID RemovePictureBoxAt (INPUT x AS INTEGER,
                                            INPUT y AS INTEGER):
         DO i_int = 1 TO THIS:Explosives:Length:
-            THIS:tempPictureBox = CAST(THIS:Explosives:GetValue(i_int), PictureBox).
+            THIS:Boom = CAST(THIS:Explosives:GetValue(i_int - 1), PictureBox).
 
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            IF VALID-OBJECT(THIS:Boom) THEN
             DO:
-                IF THIS:tempPictureBox:Location:X = x AND
-                   THIS:tempPictureBox:Location:Y = y THEN THIS:tempPictureBox:Dispose().
+                IF THIS:Boom:Location:X = x AND
+                   THIS:Boom:Location:Y = y THEN THIS:Boom:Dispose().
             END.
         END.
     END METHOD.
@@ -1182,22 +1287,22 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:label_Dead:Visible = FALSE.
 
         DO i_int = 1 TO THIS:Bombs:Length:
-            THIS:tempPictureBox = CAST(THIS:Bombs:GetValue(i_int), PictureBox).
+            THIS:Bomb = CAST(THIS:Bombs:GetValue(i_int - 1), PictureBox).
 
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            IF VALID-OBJECT(THIS:Bomb) THEN
             DO:
-                THIS:tempPictureBox:Dispose().
-                THIS:tempPictureBox = ?.
+                THIS:Bomb:Dispose().
+                THIS:Bomb = ?.
             END.
         END.
 
         DO i_int = 1 TO THIS:Explosives:Length:
-            THIS:tempPictureBox = CAST(THIS:Explosives:GetValue(i_int), PictureBox).
+            THIS:Boom = CAST(THIS:Explosives:GetValue(i_int - 1), PictureBox).
 
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            IF VALID-OBJECT(THIS:Boom) THEN
             DO:
-                THIS:tempPictureBox:Dispose().
-                THIS:tempPictureBox = ?.
+                THIS:Boom:Dispose().
+                THIS:Boom = ?.
             END.
         END.
 
@@ -1284,7 +1389,7 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
                 ELSE
                 DO:
                     THIS:GameOn = TRUE.
-                    THIS:label_Dead:Text = "You died, press Spaec to start".
+                    THIS:label_Dead:Text = "You died, press Space to start".
                     THIS:label_Dead:Visible = FALSE.
                 END.
             END.
@@ -1307,13 +1412,13 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
             WHEN Keys:Space THEN
             DO:
                 IF THIS:label_Dead:Visible                   AND
-                   INDEX(THIS:label_Dead:Text, "Paused") > 0 THEN
+                   INDEX(THIS:label_Dead:Text, "Paused") = 0 THEN
                 DO:
                     THIS:Reset().
                 END.
                 ELSE
                 DO:
-                    IF NOT THIS:Player_Jump AND NOT THIS:InAirCollision(THIS:pb_Player) THEN
+                    IF NOT THIS:Player_Jump AND NOT THIS:InAirNoCollision(THIS:pb_Player) THEN
                     DO:
                         IF THIS:LastDirRight THEN
                             THIS:pb_Player:Image = THIS:Character:jump_r.
@@ -1353,19 +1458,19 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     METHOD PUBLIC INTEGER GetBombsNum (INPUT Arr AS "System.Windows.Forms.PictureBox[]"):
         i_count = 0.
         DO i_int = 1 TO Arr:Length:
-            THIS:tempPictureBox = CAST(Arr:GetValue(i_int), PictureBox).
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN ASSIGN i_count = i_count + 1.
+            THIS:Bomb = CAST(Arr:GetValue(i_int - 1), PictureBox).
+            IF VALID-OBJECT(THIS:Bomb) THEN ASSIGN i_count = i_count + 1.
         END.
         RETURN i_count.
     END METHOD.
 
     METHOD PUBLIC LOGICAL NoCollision (INPUT tar AS PictureBox):
         DO i_int = 1 TO THIS:WorldObjects:Length:
-            THIS:tempPictureBox = CAST(THIS:WorldObjects:GetValue(i_int), PictureBox).
+            THIS:Obj1 = CAST(THIS:WorldObjects:GetValue(i_int - 1), PictureBox).
 
-            IF VALID-OBJECT(THIS:tempPictureBox) THEN
+            IF VALID-OBJECT(THIS:Obj1) THEN
             DO:
-                IF tar:Bounds:IntersectsWith(THIS:tempPictureBox:Bounds) THEN RETURN TRUE.
+                IF tar:Bounds:IntersectsWith(THIS:Obj1:Bounds) THEN RETURN TRUE.
             END.
         END.
         RETURN FALSE.
