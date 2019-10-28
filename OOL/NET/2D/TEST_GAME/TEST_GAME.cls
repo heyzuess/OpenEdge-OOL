@@ -152,6 +152,7 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
     DEFINE PRIVATE VARIABLE Character              AS Actor                                  NO-UNDO.
     DEFINE PRIVATE VARIABLE World                  AS World                                  NO-UNDO.
     DEFINE PRIVATE VARIABLE Enemy                  AS Enemy                                  NO-UNDO.
+    DEFINE PRIVATE VARIABLE AppIcon                AS AppIcon                                NO-UNDO.
 
     CONSTRUCTOR TEST_GAME ():
         SUPER().
@@ -240,6 +241,12 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:Enemy:Enemy_right = THIS:Enemy:LoadFromDir("Enemy-right.png").
         THIS:Enemy:Rocket_L    = THIS:Enemy:LoadFromDir("Rocket_L.png").
         THIS:Enemy:Rocket_R    = THIS:Enemy:LoadFromDir("Rocket_R.png").
+        //
+        // Icon Resources 
+        //
+        THIS:AppIcon = NEW AppIcon().
+        THIS:AppIcon:ResourceLocation = THIS:Character:ResourceLocation.
+        THIS:AppIcon:Icon = Icon:ExtractAssociatedIcon(THIS:AppIcon:ResourceLocation + "Bomb.ico").
 
         CAST(THIS:pb_NPC2, ISupportInitialize):BeginInit().
         CAST(THIS:pb_NPC1, ISupportInitialize):BeginInit().
@@ -607,7 +614,7 @@ CLASS OOL.NET.2D.TEST_GAME.TEST_GAME INHERITS Form USE-WIDGET-POOL:
         THIS:Controls:Add(THIS:WorldFloor).
         THIS:Controls:Add(THIS:WorldFrame).
         THIS:FormBorderStyle = FormBorderStyle:FixedToolWindow.
-//        THIS:Icon = Icon:ExtractAssociatedIcon("").
+        THIS:Icon = THIS:AppIcon:Icon.
         THIS:MaximizeBox = FALSE.
         THIS:MinimizeBox = FALSE.
         THIS:Name = "Main".

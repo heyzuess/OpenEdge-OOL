@@ -1,0 +1,10 @@
+STARTED: 10/28/2019 13:34:45.725
+10/28/2019 13:34:46.524: Added bomb at 0
+10/28/2019 13:34:47.517: Added bomb at 1
+10/28/2019 13:34:47.872: Removed rocket at 0
+10/28/2019 13:34:47.878: Removed rocket at 0
+10/28/2019 13:34:47.883: Removed bomb at 0
+10/28/2019 13:34:49.389: Added bomb at 0
+10/28/2019 13:34:49.680: Removed rocket at 1
+10/28/2019 13:34:49.685: Removed rocket at 1
+10/28/2019 13:34:49.690: Removed bomb at 1
