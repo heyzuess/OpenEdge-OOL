@@ -66,10 +66,15 @@ CLASS OOL.NET.Settings USE-WIDGET-POOL:
     CONSTRUCTOR Settings (INPUT cip_AppName    AS CHARACTER,
                           INPUT cip_ObjectName AS CHARACTER):
         SUPER().
-        ASSIGN THIS:AppName    = cip_AppName
-               THIS:ObjectName = cip_ObjectName.
+        DO ON ERROR UNDO, THROW:
+            ASSIGN THIS:AppName    = cip_AppName
+                   THIS:ObjectName = cip_ObjectName.
 
-        IF NOT THIS:IntializeSettings() THEN DELETE OBJECT(THIS).
+            IF NOT THIS:IntializeSettings() THEN DELETE OBJECT(THIS).
+        END.
+        CATCH e AS Progress.Lang.Error:
+            UNDO, THROW e.
+        END CATCH.
     END CONSTRUCTOR.
 
     DESTRUCTOR Settings ():
@@ -142,6 +147,9 @@ CLASS OOL.NET.Settings USE-WIDGET-POOL:
         IF LOOKUP(ProgramPath, PROPATH) = 0 THEN
             ASSIGN PROPATH = PROPATH + "," + ProgramPath.
 
+        ASSIGN THIS:RESX = THIS:ProgramRESX
+               THIS:PATH = PROPATH.
+
         IF lv_makeFile THEN
         DO ON ERROR UNDO, THROW:
             CREATE AppSetting.
@@ -155,15 +163,53 @@ CLASS OOL.NET.Settings USE-WIDGET-POOL:
                    lcv_fileTemp = SUBSTRING(lcv_fileTemp, 2, LENGTH(lcv_fileTemp))
                    lcv_fileTemp = SUBSTRING(lcv_fileTemp, 1, LENGTH(lcv_fileTemp) - 1).
             COPY-LOB FROM lcv_fileTemp TO FILE ProgramSettings.
+            RETURN TRUE.
+        END.
+        CATCH e AS Progress.Lang.Error:
+            MessageBox:Show(e:GetMessage(1)).
+            RETURN FALSE.
+        END CATCH.
+    END METHOD.
 
+    METHOD PUBLIC LOGICAL ReadFile ():
+        DO ON ERROR UNDO, THROW:
+            COPY-LOB FROM FILE ProgramSettings TO lcv_fileTemp.
             CATCH e AS Progress.Lang.Error:
                 MessageBox:Show(e:GetMessage(1)).
                 RETURN FALSE.
             END CATCH.
         END.
 
-        ASSIGN THIS:RESX = THIS:ProgramRESX
-               THIS:PATH = PROPATH.
-        RETURN TRUE.
+        DO ON ERROR UNDO, THROW:
+            ASSIGN oParser = NEW ObjectModelParser().
+            ASSIGN oJson = CAST(oParser:Parse(lcv_fileTemp), JsonObject).
+            CATCH e AS Progress.Lang.Error:
+                MessageBox:Show(e:GetMessage(1)).
+                RETURN FALSE.
+            END CATCH.
+        END.
+    END METHOD.
+
+    METHOD PUBLIC LOGICAL SaveFile ():
+        DO ON ERROR UNDO, THROW:
+            FOR FIRST AppSetting:
+            END.
+            IF NOT AVAILABLE AppSetting THEN CREATE AppSetting.
+
+            ASSIGN AppSetting.AppLocation      = ProgramPath
+                   AppSetting.ResourceLocation = ProgramPath
+                   AppSetting.ResourceRESX     = ProgramRESX
+                   AppSetting.ExtendPropath    = ProgramPropath.
+
+            TEMP-TABLE AppSetting:WRITE-JSON("LONGCHAR", lcv_fileTemp, TRUE, "UTF-8", FALSE, TRUE).
+            ASSIGN lcv_fileTemp = TRIM(lcv_fileTemp)
+                   lcv_fileTemp = SUBSTRING(lcv_fileTemp, 2, LENGTH(lcv_fileTemp))
+                   lcv_fileTemp = SUBSTRING(lcv_fileTemp, 1, LENGTH(lcv_fileTemp) - 1).
+            COPY-LOB FROM lcv_fileTemp TO FILE ProgramSettings.
+        END.
+        CATCH e AS Progress.Lang.Error:
+            MessageBox:Show(e:GetMessage(1)).
+            RETURN FALSE.
+        END CATCH.
     END METHOD.
 END CLASS.
