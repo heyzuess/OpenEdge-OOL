@@ -70,8 +70,8 @@ CLASS OOL.CGE.Tetris.MultiDimensionalArray INHERITS System.Object USE-WIDGET-POO
         ASSIGN arrayTable.i_idx = iip_x.
 
         IF NUM-ENTRIES(arrayTable.c_array, delim) < iip_y THEN
-        DO i_i = NUM-ENTRIES(arrayTable.c_array, delim) TO iip_y:
-            ASSIGN arrayTable.c_array = arrayTable.c_array + delim.
+        DO i_i = 1 TO iip_y - NUM-ENTRIES(arrayTable.c_array, delim):
+            ASSIGN arrayTable.c_array = arrayTable.c_array + delim + "".
         END.
 
         ASSIGN ENTRY(iip_y, arrayTable.c_array, delim) = cip_val.
@@ -168,5 +168,22 @@ CLASS OOL.CGE.Tetris.MultiDimensionalArray INHERITS System.Object USE-WIDGET-POO
         END.
 
         RETURN temp.
+    END METHOD.
+
+    METHOD PUBLIC INTEGER GetArraySize (INPUT iip_idx AS INTEGER,
+                                        INPUT iip_y   AS INTEGER):
+        CASE iip_idx:
+            WHEN 1 THEN RETURN this:Count.
+            WHEN 2 THEN
+            DO:
+                FOR FIRST arrayTable
+                    WHERE arrayTable.i_idx = iip_y:
+                    
+                    RETURN NUM-ENTRIES(arrayTable.c_array, delim).
+                END.
+            END.
+            OTHERWISE RETURN ?.
+        END CASE.
+        RETURN 0.
     END METHOD.
 END CLASS.

@@ -37,30 +37,31 @@ CLASS OOL.CGE.Tetris.Tetromino INHERITS System.Object USE-WIDGET-POOL:
     END GET.
     PRIVATE SET.
 
-    DEFINE PUBLIC PROPERTY Body   AS MultiDimensionalArray GET. PRIVATE SET.
-    DEFINE PUBLIC PROPERTY Helper AS TetrominoHelper       GET. PRIVATE SET.
+    DEFINE PUBLIC PROPERTY Body       AS MultiDimensionalArray GET. PRIVATE SET.
+
+    DEFINE PRIVATE VARIABLE newFigure AS MultiDimensionalArray NO-UNDO.
+    DEFINE PRIVATE VARIABLE i_row     AS INTEGER               NO-UNDO.
+    DEFINE PRIVATE VARIABLE i_col     AS INTEGER               NO-UNDO.
 
     DEFINE PUBLIC PROPERTY Width AS INTEGER
     GET ():
-        RETURN this:Body:GetLength(0).
+        RETURN this:Body:GetArraySize(1, ?).
     END GET.
     PUBLIC SET.
 
     DEFINE PUBLIC PROPERTY Height AS INTEGER
     GET ():
-        RETURN this:Body:GetLength(1).
+        RETURN this:Body:GetArraySize(2, 1).
     END GET.
     PUBLIC SET.
 
     CONSTRUCTOR Tetromino ():
         SUPER().
-        this:Helper = NEW TetrominoHelper().
     END CONSTRUCTOR.
 
     CONSTRUCTOR Tetromino (INPUT oip_md AS MultiDimensionalArray):
         SUPER().
-        this:Helper = NEW TetrominoHelper().
-        this:Body   = oip_md.
+        this:Body = oip_md.
     END CONSTRUCTOR.
 
     DESTRUCTOR Tetromino ():
@@ -68,5 +69,18 @@ CLASS OOL.CGE.Tetris.Tetromino INHERITS System.Object USE-WIDGET-POOL:
 
     METHOD PUBLIC Object ToObject ():
         RETURN CAST(this, Object).
+    END METHOD.
+
+    METHOD PUBLIC Tetromino  GetRotate ():
+        this:newFigure = NEW MultiDimensionalArray().
+        DO i_row = 1 TO this:Width:
+            DO i_col = 1 TO this:Height:
+                this:newFigure:SetValue(i_col,
+                                        this:Width - i_row + 1,
+                                        this:Body:GetLogValue(i_row, i_col)).
+            END.
+        END.
+
+        RETURN NEW Tetromino(this:newFigure).
     END METHOD.
 END CLASS.

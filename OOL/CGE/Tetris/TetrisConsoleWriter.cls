@@ -37,19 +37,21 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
     END GET.
     PRIVATE SET.
 
-    DEFINE PRIVATE VARIABLE tetrisRows     AS INTEGER   NO-UNDO.
-    DEFINE PRIVATE VARIABLE tetrisColumns  AS INTEGER   NO-UNDO.
-    DEFINE PRIVATE VARIABLE infoColumns    AS INTEGER   NO-UNDO.
-    DEFINE PRIVATE VARIABLE consoleRows    AS INTEGER   NO-UNDO.
-    DEFINE PRIVATE VARIABLE consoleColumns AS INTEGER   NO-UNDO.
+    DEFINE PRIVATE VARIABLE tetrisRows     AS INTEGER      NO-UNDO.
+    DEFINE PRIVATE VARIABLE tetrisColumns  AS INTEGER      NO-UNDO.
+    DEFINE PRIVATE VARIABLE infoColumns    AS INTEGER      NO-UNDO.
+    DEFINE PRIVATE VARIABLE consoleRows    AS INTEGER      NO-UNDO.
+    DEFINE PRIVATE VARIABLE consoleColumns AS INTEGER      NO-UNDO.
 
-    DEFINE PRIVATE VARIABLE line           AS CHARACTER NO-UNDO.
-    DEFINE PRIVATE VARIABLE middleLine     AS CHARACTER NO-UNDO.
-    DEFINE PRIVATE VARIABLE endLine        AS CHARACTER NO-UNDO.
+    DEFINE PRIVATE VARIABLE line           AS CHARACTER    NO-UNDO.
+    DEFINE PRIVATE VARIABLE middleLine     AS CHARACTER    NO-UNDO.
+    DEFINE PRIVATE VARIABLE endLine        AS CHARACTER    NO-UNDO.
+    DEFINE PRIVATE VARIABLE scoreAsString  AS CHARACTER    NO-UNDO.
 
-    DEFINE PRIVATE VARIABLE i_i            AS INTEGER   NO-UNDO.
-    DEFINE PRIVATE VARIABLE i_j            AS INTEGER   NO-UNDO.
-    DEFINE PRIVATE VARIABLE tempValue      AS LOGICAL   NO-UNDO.
+    DEFINE PRIVATE VARIABLE i_i            AS INTEGER      NO-UNDO.
+    DEFINE PRIVATE VARIABLE i_j            AS INTEGER      NO-UNDO.
+    DEFINE PRIVATE VARIABLE tempValue      AS LOGICAL      NO-UNDO.
+    DEFINE PRIVATE VARIABLE tempColor      AS ConsoleColor NO-UNDO.
 
     CONSTRUCTOR TetrisConsoleWriter (INPUT iip_rows AS INTEGER,
                                      INPUT iip_cols AS INTEGER,
@@ -169,7 +171,7 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
 
                 IF this:tempValue THEN
                 DO:
-                    this:Write("*", i_i + 1 + currentFigureRow, 1 + currentFigureColumn + i_j).
+                    this:Write("*", i_i + 1 + currentFigureRow, 1 + currentFigureCol + i_j).
                 END.
             END.
         END.
@@ -178,7 +180,23 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
     METHOD PRIVATE VOID Write (INPUT cip_text AS CHARACTER,
                                INPUT iip_row  AS INTEGER,
                                INPUT iip_col  AS INTEGER):
+        this:tempColor = Console:ForegroundColor.
+        Console:ForegroundColor = ConsoleColor:Yellow.
         Console:SetCursorPosition(iip_col, iip_row).
         Console:Write(cip_text).
+        Console:ForegroundColor = this:tempColor.
+    END METHOD.
+
+    METHOD PUBLIC VOID WriteGameOver (INPUT score AS INTEGER):
+        i_i = this:tetrisRows / 2 - 3.
+        i_j = (this:tetrisColumns + 3 + this:infoColumns) / 2 - 6.
+
+        this:scoreAsString = STRING(score).
+        this:scoreAsString = FILL(' ', 7 - LENGTH(this:scoreAsString)) + this:scoreAsString.
+        this:Write("╔═════════╗", i_i, i_j).
+        this:Write("║ Game    ║", i_i + 1, i_j).
+        this:Write("║   over! ║", i_i + 2, i_j).
+        this:Write(SUBSTITUTE("║ &1 ║", this:scoreAsString), i_i + 3, i_j).
+        this:Write("╚═════════╝", i_i + 4, i_j).
     END METHOD.
 END CLASS.
