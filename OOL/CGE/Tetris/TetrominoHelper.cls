@@ -18,7 +18,7 @@
   Name     : TetrominoHelper.cls
   Author   : Jesse Iberri
   Date     : 11/25/2019
-  Purpose  : OOL CGE Tetris Program class
+  Purpose  : OOL CGE Tetris TetrominoHelper class
 
 ------------------------------------------------------------------------------------------
 MODIFICATIONS:

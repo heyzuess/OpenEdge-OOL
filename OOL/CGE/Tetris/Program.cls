@@ -29,6 +29,7 @@ Date        Who         Reference       Description
 *****************************************************************************************/
 USING System.*                     FROM ASSEMBLY.
 USING System.Collections.Generic.* FROM ASSEMBLY.
+USING Progress.Util.*              FROM ASSEMBLY.
 USING OOL.CGE.Tetris.*.
 
 CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
@@ -38,13 +39,110 @@ CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
     END GET.
     PRIVATE SET.
 
-    DEFINE PRIVATE VARIABLE TetrisRows    AS INTEGER NO-UNDO.
-    DEFINE PRIVATE VARIABLE TetrisCols    AS INTEGER NO-UNDO.
-    DEFINE PRIVATE VARIABLE TetrisFigures AS "System.Collections.Generic.List<System.Object>" NO-UNDO.
+    DEFINE PRIVATE VARIABLE TetrisRows          AS INTEGER               NO-UNDO.
+    DEFINE PRIVATE VARIABLE TetrisCols          AS INTEGER               NO-UNDO.
+    DEFINE PRIVATE VARIABLE TetrisFigures       AS "System.Collections.Generic.List<System.Object>" NO-UNDO.
+    DEFINE PRIVATE VARIABLE State               AS TetrisGameState       NO-UNDO.
+
+    DEFINE PRIVATE VARIABLE tempTetromino       AS Tetromino             NO-UNDO.
+    DEFINE PRIVATE VARIABLE tempMDArray         AS MultiDimensionalArray NO-UNDO.
+
+    DEFINE PRIVATE VARIABLE ScorePerLines       AS Array                 NO-UNDO.
+    DEFINE PRIVATE VARIABLE scoreManager        AS ScoreManager          NO-UNDO.
+    DEFINE PRIVATE VARIABLE musicPlayer         AS MusicPlayer           NO-UNDO.
+    DEFINE PRIVATE VARIABLE tetrisConsoleWriter AS TetrisConsoleWriter   NO-UNDO.
 
     CONSTRUCTOR Program ():
+        SUPER().
+        this:Main().
     END CONSTRUCTOR.
 
     DESTRUCTOR Program ():
     END DESTRUCTOR.
+
+    METHOD PRIVATE Array IntArray (INPUT iip_idx AS INTEGER):
+        RETURN Array:CreateInstance(TypeHelper:GetType("System.Int32[]"), iip_idx).
+    END METHOD.
+
+    METHOD PRIVATE VOID Main ():
+        this:TetrisFigures = NEW "System.Collections.Generic.List<System.Object>"().
+
+        this:tempMDArray = NEW MultiDimensionalArray().
+        this:tempMDArray:SetValue(1, 1, TRUE).
+        this:tempMDArray:SetValue(1, 2, TRUE).
+        this:tempMDArray:SetValue(1, 3, TRUE).
+        this:tempMDArray:SetValue(1, 4, TRUE).
+        this:tempTetromino = NEW Tetromino(this:tempMDArray).
+        this:TetrisFigures:Add(this:tempTetromino:ToObject()).
+
+        this:tempMDArray = NEW MultiDimensionalArray().
+        this:tempMDArray:SetValue(1, 1, TRUE).
+        this:tempMDArray:SetValue(1, 2, TRUE).
+        this:tempMDArray:SetValue(2, 1, TRUE).
+        this:tempMDArray:SetValue(2, 2, TRUE).
+        this:tempTetromino = NEW Tetromino(this:tempMDArray).
+        this:TetrisFigures:Add(this:tempTetromino:ToObject()).
+
+        this:tempMDArray = NEW MultiDimensionalArray().
+        this:tempMDArray:SetValue(1, 1, FALSE).
+        this:tempMDArray:SetValue(1, 2, TRUE).
+        this:tempMDArray:SetValue(1, 3, FALSE).
+        this:tempMDArray:SetValue(2, 1, TRUE).
+        this:tempMDArray:SetValue(2, 2, TRUE).
+        this:tempMDArray:SetValue(2, 3, TRUE).
+        this:tempTetromino = NEW Tetromino(this:tempMDArray).
+        this:TetrisFigures:Add(this:tempTetromino:ToObject()).
+
+        this:tempMDArray = NEW MultiDimensionalArray().
+        this:tempMDArray:SetValue(1, 1, FALSE).
+        this:tempMDArray:SetValue(1, 2, TRUE).
+        this:tempMDArray:SetValue(1, 3, TRUE).
+        this:tempMDArray:SetValue(2, 1, TRUE).
+        this:tempMDArray:SetValue(2, 2, TRUE).
+        this:tempMDArray:SetValue(2, 3, FALSE).
+        this:tempTetromino = NEW Tetromino(this:tempMDArray).
+        this:TetrisFigures:Add(this:tempTetromino:ToObject()).
+
+        this:tempMDArray = NEW MultiDimensionalArray().
+        this:tempMDArray:SetValue(1, 1, TRUE).
+        this:tempMDArray:SetValue(1, 2, TRUE).
+        this:tempMDArray:SetValue(1, 3, FALSE).
+        this:tempMDArray:SetValue(2, 1, FALSE).
+        this:tempMDArray:SetValue(2, 2, TRUE).
+        this:tempMDArray:SetValue(2, 3, TRUE).
+        this:tempTetromino = NEW Tetromino(this:tempMDArray).
+        this:TetrisFigures:Add(this:tempTetromino:ToObject()).
+
+        this:tempMDArray = NEW MultiDimensionalArray().
+        this:tempMDArray:SetValue(1, 1, TRUE).
+        this:tempMDArray:SetValue(1, 2, FALSE).
+        this:tempMDArray:SetValue(1, 3, FALSE).
+        this:tempMDArray:SetValue(2, 1, TRUE).
+        this:tempMDArray:SetValue(2, 2, TRUE).
+        this:tempMDArray:SetValue(2, 3, TRUE).
+        this:tempTetromino = NEW Tetromino(this:tempMDArray).
+        this:TetrisFigures:Add(this:tempTetromino:ToObject()).
+
+        this:tempMDArray = NEW MultiDimensionalArray().
+        this:tempMDArray:SetValue(1, 1, FALSE).
+        this:tempMDArray:SetValue(1, 2, FALSE).
+        this:tempMDArray:SetValue(1, 3, TRUE).
+        this:tempMDArray:SetValue(2, 1, TRUE).
+        this:tempMDArray:SetValue(2, 2, TRUE).
+        this:tempMDArray:SetValue(2, 3, TRUE).
+        this:tempTetromino = NEW Tetromino(this:tempMDArray).
+        this:TetrisFigures:Add(this:tempTetromino:ToObject()).
+
+        this:ScorePerLines = this:IntArray(5).
+        this:ScorePerLines:SetValue(0, 0).
+        this:ScorePerLines:SetValue(1, 40).
+        this:ScorePerLines:SetValue(2, 100).
+        this:ScorePerLines:SetValue(3, 300).
+        this:ScorePerLines:SetValue(4, 1200).
+
+        this:State = NEW TetrisGameState(this:TetrisRows, this:TetrisCols).
+        this:scoreManager = NEW ScoreManager("scores.txt").
+        this:musicPlayer = NEW MusicPlayer().
+        this:musicPlayer:Play().
+    END METHOD.
 END CLASS.

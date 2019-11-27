@@ -18,7 +18,7 @@
   Name     : Tetromino.cls
   Author   : Jesse Iberri
   Date     : 11/25/2019
-  Purpose  : OOL CGE Tetris Program class
+  Purpose  : OOL CGE Tetris Tetromino class
 
 ------------------------------------------------------------------------------------------
 MODIFICATIONS:
@@ -37,7 +37,8 @@ CLASS OOL.CGE.Tetris.Tetromino INHERITS System.Object USE-WIDGET-POOL:
     END GET.
     PRIVATE SET.
 
-    DEFINE PUBLIC PROPERTY Body AS MultiDimensionalArray GET. PRIVATE SET.
+    DEFINE PUBLIC PROPERTY Body   AS MultiDimensionalArray GET. PRIVATE SET.
+    DEFINE PUBLIC PROPERTY Helper AS TetrominoHelper       GET. PRIVATE SET.
 
     DEFINE PUBLIC PROPERTY Width AS INTEGER
     GET ():
@@ -53,13 +54,19 @@ CLASS OOL.CGE.Tetris.Tetromino INHERITS System.Object USE-WIDGET-POOL:
 
     CONSTRUCTOR Tetromino ():
         SUPER().
+        this:Helper = NEW TetrominoHelper().
     END CONSTRUCTOR.
 
     CONSTRUCTOR Tetromino (INPUT oip_md AS MultiDimensionalArray):
         SUPER().
-        this:Body = oip_md.
+        this:Helper = NEW TetrominoHelper().
+        this:Body   = oip_md.
     END CONSTRUCTOR.
 
     DESTRUCTOR Tetromino ():
     END DESTRUCTOR.
+
+    METHOD PUBLIC Object ToObject ():
+        RETURN CAST(this, Object).
+    END METHOD.
 END CLASS.

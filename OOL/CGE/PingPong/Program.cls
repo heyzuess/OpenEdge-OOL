@@ -38,22 +38,22 @@ CLASS OOL.CGE.PingPong.Program USE-WIDGET-POOL:
     END GET.
     PRIVATE SET.
 
-    DEFINE PRIVATE VARIABLE firstPlayerPadSize   AS INTEGER NO-UNDO.
-    DEFINE PRIVATE VARIABLE secondPlayerPadSize  AS INTEGER NO-UNDO.
-    DEFINE PRIVATE VARIABLE ballPositionX        AS INTEGER NO-UNDO.
-    DEFINE PRIVATE VARIABLE ballPositionY        AS INTEGER NO-UNDO.
-    DEFINE PRIVATE VARIABLE ballDirectionUp      AS LOGICAL NO-UNDO.
-    DEFINE PRIVATE VARIABLE ballDirectionRight   AS LOGICAL NO-UNDO.
-    DEFINE PRIVATE VARIABLE firstPlayerPosition  AS INTEGER NO-UNDO.
-    DEFINE PRIVATE VARIABLE secondPlayerPosition AS INTEGER NO-UNDO.
-    DEFINE PRIVATE VARIABLE firstPlayerResult    AS INTEGER NO-UNDO.
-    DEFINE PRIVATE VARIABLE secondPlayerResult   AS INTEGER NO-UNDO.
-    DEFINE PRIVATE VARIABLE rng                  AS Random  NO-UNDO.
+    DEFINE PRIVATE VARIABLE firstPlayerPadSize   AS INTEGER        NO-UNDO.
+    DEFINE PRIVATE VARIABLE secondPlayerPadSize  AS INTEGER        NO-UNDO.
+    DEFINE PRIVATE VARIABLE ballPositionX        AS INTEGER        NO-UNDO.
+    DEFINE PRIVATE VARIABLE ballPositionY        AS INTEGER        NO-UNDO.
+    DEFINE PRIVATE VARIABLE ballDirectionUp      AS LOGICAL        NO-UNDO.
+    DEFINE PRIVATE VARIABLE ballDirectionRight   AS LOGICAL        NO-UNDO.
+    DEFINE PRIVATE VARIABLE firstPlayerPosition  AS INTEGER        NO-UNDO.
+    DEFINE PRIVATE VARIABLE secondPlayerPosition AS INTEGER        NO-UNDO.
+    DEFINE PRIVATE VARIABLE firstPlayerResult    AS INTEGER        NO-UNDO.
+    DEFINE PRIVATE VARIABLE secondPlayerResult   AS INTEGER        NO-UNDO.
+    DEFINE PRIVATE VARIABLE rng                  AS Random         NO-UNDO.
 
-    DEFINE PRIVATE VARIABLE randomNumber         AS INTEGER NO-UNDO.
+    DEFINE PRIVATE VARIABLE randomNumber         AS INTEGER        NO-UNDO.
     DEFINE PRIVATE VARIABLE keyInfo              AS ConsoleKeyInfo NO-UNDO.
 
-    DEFINE PRIVATE VARIABLE i_i                  AS INTEGER NO-UNDO.
+    DEFINE PRIVATE VARIABLE i_i                  AS INTEGER        NO-UNDO.
 
     CONSTRUCTOR Program ():
         this:Main().
