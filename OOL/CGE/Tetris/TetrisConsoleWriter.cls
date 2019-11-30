@@ -84,7 +84,7 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
         Console:WindowWidth = this:consoleColumns.
         Console:BufferHeight = this:consoleRows + 1.
         Console:BufferWidth = this:consoleColumns.
-        Console:ForegroundColor = ConsoleColor:Black.
+        Console:ForegroundColor = ConsoleColor:Yellow.
         Console:Title = "Tetris".
         Console:CursorVisible = FALSE.
     END METHOD.
@@ -99,27 +99,27 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
 
     METHOD PUBLIC VOID DrawBorder ():
         Console:SetCursorPosition(0, 0).
-        this:line = "╔".
+        this:line = "+". //"╔".
         this:line = this:line + FILL('=', this:tetrisColumns).
-        this:line = this:line + "╦".
+        this:line = this:line + "T". //"╦".
         this:line = this:line + FILL('=', this:infoColumns).
-        this:line = this:line + "╗".
+        this:line = this:line + "+".  //"╗".
         Console:Write(this:line).
 
         DO i_i = 1 TO this:tetrisRows:
-            this:middleLine = "║".
+            this:middleLine = "|". //"║".
             this:middleLine = this:middleLine + FILL(' ', this:tetrisColumns).
-            this:middleLine = this:middleLine + "║".
+            this:middleLine = this:middleLine + "|". //"║".
             this:middleLine = this:middleLine + FILL(' ', this:infoColumns).
-            this:middleLine = this:middleLine + "║".
+            this:middleLine = this:middleLine + "|". //"║".
             Console:Write(this:middleLine).
         END.
 
-        this:endLine = "╚".
+        this:endLine = "+". //"╚".
         this:endLine = this:endLine + FILL('=', this:tetrisColumns).
-        this:endLine = this:endLine + "╩".
+        this:endLine = this:endLine + "+". //"╩".
         this:endLine = this:endLine + FILL('=', this:infoColumns).
-        this:endLine = this:endLine + "╝".
+        this:endLine = this:endLine + "+". //"╝".
         Console:Write(this:endLine).
     END METHOD.
 
@@ -193,10 +193,18 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
 
         this:scoreAsString = STRING(score).
         this:scoreAsString = FILL(' ', 7 - LENGTH(this:scoreAsString)) + this:scoreAsString.
+        this:Write("+═════════+", i_i, i_j).
+        this:Write("| Game    |", i_i + 1, i_j).
+        this:Write("|   over! |", i_i + 2, i_j).
+        this:Write(SUBSTITUTE("| &1 |", this:scoreAsString), i_i + 3, i_j).
+        this:Write("+═════════+", i_i + 4, i_j).
+
+/*
         this:Write("╔═════════╗", i_i, i_j).
         this:Write("║ Game    ║", i_i + 1, i_j).
         this:Write("║   over! ║", i_i + 2, i_j).
         this:Write(SUBSTITUTE("║ &1 ║", this:scoreAsString), i_i + 3, i_j).
         this:Write("╚═════════╝", i_i + 4, i_j).
+*/
     END METHOD.
 END CLASS.

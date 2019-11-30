@@ -61,7 +61,7 @@ CLASS OOL.CGE.Tetris.TetrisGameState USE-WIDGET-POOL:
         
         DO i_i = 1 TO tetrisRows:
             DO i_j = 1 TO tetrisColumns:
-                this:TetrisField:SetValue(i_i, i_j, 0).
+                this:TetrisField:SetValue(i_i, i_j, FALSE).
             END.
         END.
     END CONSTRUCTOR.

@@ -28,9 +28,12 @@ Date        Who         Reference       Description
 ------------------------------------------------------------------------------------------
 *****************************************************************************************/
 USING System.*                     FROM ASSEMBLY.
+USING System.Text.*                FROM ASSEMBLY.
 USING System.Threading.*           FROM ASSEMBLY.
 USING System.Collections.Generic.* FROM ASSEMBLY.
 USING Progress.Util.*              FROM ASSEMBLY.
+
+USING OOL.CGE.*.
 USING OOL.CGE.Tetris.*.
 
 CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
@@ -56,6 +59,7 @@ CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
     DEFINE PRIVATE VARIABLE key                 AS ConsoleKeyInfo        NO-UNDO.
     DEFINE PRIVATE VARIABLE newFigure           AS Tetromino             NO-UNDO.
     DEFINE PRIVATE VARIABLE lines               AS INTEGER               NO-UNDO.
+    DEFINE PRIVATE VARIABLE linesTemp           AS INTEGER               NO-UNDO.
     DEFINE PRIVATE VARIABLE rowIsFull           AS LOGICAL               NO-UNDO.
 
     DEFINE PRIVATE VARIABLE i_i                 AS INTEGER               NO-UNDO.
@@ -221,31 +225,69 @@ CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
 
             IF this:Collision(this:State:CurrentFigure) THEN
             DO:
+                Debug:Message("Test 1").
+
                 this:AddCurrentFigure().
+
+                Debug:Message("Test 2").
+
                 this:lines = this:CheckForFullLines().
+                this:lines = this:lines + 1.
+
+                Debug:Message("Test 3").
+
                 this:scoreManager:AddToScore(this:ScorePerLines[this:lines] * this:State:Level).
+                
+                Debug:Message("Test 4").
+
                 this:tempTetromino = CAST(this:TetrisFigures:Item[this:random:Next(0, this:TetrisFigures:Count)], Tetromino).
+                
+                Debug:Message("Test 5").
+
                 this:State:CurrentFigure = this:tempTetromino.
+                
+                Debug:Message("Test 6").
+
                 this:State:CurrentFigureRow = 0.
+                
+                Debug:Message("Test 7").
+
                 this:State:CurrentFigureCol = 0.
+
+                Debug:Message("Test 8").
+                
                 IF this:Collision(this:State:CurrentFigure) THEN
                 DO:
+                    Debug:Message(9).
+                    
                     this:scoreManager:AddToHighScore().
+
+                    Debug:Message(10).
+                    
                     this:tetrisConsoleWriter:DrawAll(this:State, this:scoreManager).
+
+                    Debug:Message(11).
+                    
                     this:tetrisConsoleWriter:WriteGameOver(this:scoreManager:Score).
+
+                    Debug:Message(12).
+
                     Thread:Sleep(100000).
+
+                    Debug:Message(13).
+
                     RETURN.
                 END.
             END.
 
             this:tetrisConsoleWriter:DrawAll(this:State, this:scoreManager).
+            
             Thread:Sleep(40).
         END.
     END METHOD.
 
     METHOD PRIVATE INTEGER CheckForFullLines ():
-        this:lines = 0.
-
+        this:linesTemp = 0.
         DO i_i = 1 TO this:State:TetrisField:GetArraySize(1, ?):
             this:rowIsFull = TRUE.
             
@@ -269,11 +311,11 @@ CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
                     i_j = i_j - 1.
                 END.
 
-                this:lines = this:lines + 1.
+                this:linesTemp = this:linesTemp + 1.
             END.
         END.
 
-        RETURN this:lines.
+        RETURN this:linesTemp.
     END METHOD.
 
     METHOD PRIVATE VOID AddCurrentFigure ():
@@ -291,10 +333,16 @@ CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
 
     METHOD PRIVATE LOGICAL Collision (INPUT figure AS Tetromino):
         IF this:State:CurrentFigureCol > this:TetrisCols - figure:Height THEN
+        do:
+            Debug:Message("Return 1").
             RETURN TRUE.
+        end.
         
         IF this:State:CurrentFigureRow + figure:Width = this:TetrisRows THEN
+        do:
+            Debug:Message("Return 2").
             RETURN TRUE.
+        end.
 
         DO i_i = 1 TO figure:Width:
             DO i_j = 1 TO figure:Height:
@@ -308,27 +356,5 @@ CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
         END.
 
         RETURN FALSE.
-    END METHOD.
-
-    DEFINE PRIVATE VARIABLE tempcolor AS ConsoleColor.
-
-    METHOD PRIVATE VOID Debug (INPUT cip_char AS CHARACTER):
-        this:tempcolor = Console:ForegroundColor.
-        Console:ForegroundColor = ConsoleColor:Yellow.
-        Console:WriteLine(cip_char).
-        Console:ForegroundColor = this:tempcolor.
-        Console:ReadKey().
-    END METHOD.
-
-    METHOD PRIVATE VOID Debug (INPUT iip_int AS INTEGER):
-        this:Debug(STRING(iip_int)).
-    END METHOD.
-
-    METHOD PRIVATE VOID Debug (INPUT dip_dec AS DECIMAL):
-        this:Debug(STRING(dip_dec)).
-    END METHOD.
-
-    METHOD PRIVATE VOID Debug (INPUT lip_log AS LOGICAL):
-        this:Debug(STRING(lip_log)).
     END METHOD.
 END CLASS.
