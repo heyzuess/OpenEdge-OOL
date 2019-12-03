@@ -101,7 +101,7 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
         Console:SetCursorPosition(0, 0).
         this:line = "+". //"╔".
         this:line = this:line + FILL('=', this:tetrisColumns).
-        this:line = this:line + "T". //"╦".
+        this:line = this:line + "+". //"╦".
         this:line = this:line + FILL('=', this:infoColumns).
         this:line = this:line + "+".  //"╗".
         Console:Write(this:line).
@@ -143,9 +143,9 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
     END METHOD.
 
     METHOD PUBLIC VOID DrawTetrisField (INPUT tetrisField AS MultiDimensionalArray):
-        DO i_i = 1 TO tetrisField:GetLength(1):
+        DO i_i = 1 TO tetrisField:GetArraySize(1, ?):
             this:line = "".
-            DO i_j = 1 TO tetrisField:GetLength(2):
+            DO i_j = 1 TO tetrisField:GetArraySize(2, 1):
                 this:tempValue = tetrisField:GetLogValue(i_i, i_j).
 
                 IF this:tempValue THEN
@@ -158,7 +158,7 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
                 END.
             END.
 
-            this:Write(this:line, i_i + 1, 1).
+            this:Write(this:line, i_i, 1).
         END.
     END METHOD.
 
@@ -171,7 +171,7 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
 
                 IF this:tempValue THEN
                 DO:
-                    this:Write("*", i_i + 1 + currentFigureRow, 1 + currentFigureCol + i_j).
+                    this:Write("*", i_i + currentFigureRow, currentFigureCol + i_j).
                 END.
             END.
         END.
@@ -193,11 +193,11 @@ CLASS OOL.CGE.Tetris.TetrisConsoleWriter USE-WIDGET-POOL:
 
         this:scoreAsString = STRING(score).
         this:scoreAsString = FILL(' ', 7 - LENGTH(this:scoreAsString)) + this:scoreAsString.
-        this:Write("+═════════+", i_i, i_j).
+        this:Write("+=========+", i_i, i_j).
         this:Write("| Game    |", i_i + 1, i_j).
         this:Write("|   over! |", i_i + 2, i_j).
         this:Write(SUBSTITUTE("| &1 |", this:scoreAsString), i_i + 3, i_j).
-        this:Write("+═════════+", i_i + 4, i_j).
+        this:Write("+=========+", i_i + 4, i_j).
 
 /*
         this:Write("╔═════════╗", i_i, i_j).

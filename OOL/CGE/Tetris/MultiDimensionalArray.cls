@@ -55,6 +55,19 @@ CLASS OOL.CGE.Tetris.MultiDimensionalArray INHERITS System.Object USE-WIDGET-POO
     DESTRUCTOR MultiDimensionalArray ():
     END DESTRUCTOR.
 
+    METHOD PRIVATE CHARACTER IncreaseEntries (INPUT cip_array AS CHARACTER,
+                                              INPUT iip_length AS INTEGER):
+        ADD-BLK:
+        REPEAT:
+            IF NUM-ENTRIES(cip_array, delim) < iip_length THEN
+            DO:
+                ASSIGN cip_array = cip_array + delim + "no".
+            END.
+            ELSE LEAVE ADD-BLK.
+        END.
+        RETURN cip_array.
+    END METHOD.
+
     METHOD PUBLIC VOID SetValue (INPUT iip_x   AS INTEGER,
                                  INPUT iip_y   AS INTEGER,
                                  INPUT cip_val AS CHARACTER):
@@ -64,15 +77,11 @@ CLASS OOL.CGE.Tetris.MultiDimensionalArray INHERITS System.Object USE-WIDGET-POO
         IF NOT AVAILABLE arrayTable THEN
         DO:
             CREATE arrayTable.
-            ASSIGN this:Count = this:Count + 1.
+            ASSIGN arrayTable.i_idx = iip_x
+                   this:Count       = this:Count + 1.
         END.
 
-        ASSIGN arrayTable.i_idx = iip_x.
-
-        IF NUM-ENTRIES(arrayTable.c_array, delim) < iip_y THEN
-        DO i_i = 1 TO iip_y - NUM-ENTRIES(arrayTable.c_array, delim):
-            ASSIGN arrayTable.c_array = arrayTable.c_array + delim + "".
-        END.
+        arrayTable.c_array = this:IncreaseEntries(arrayTable.c_array, iip_y).
 
         ASSIGN ENTRY(iip_y, arrayTable.c_array, delim) = cip_val.
     END METHOD.
@@ -100,9 +109,13 @@ CLASS OOL.CGE.Tetris.MultiDimensionalArray INHERITS System.Object USE-WIDGET-POO
         FOR FIRST arrayTable
             WHERE arrayTable.i_idx = iip_x:
         END.
-        IF NOT AVAILABLE arrayTable THEN RETURN ?.
+        IF NOT AVAILABLE arrayTable THEN
+        DO:
+            CREATE arrayTable.
+            ASSIGN arrayTable.i_idx = iip_x.
+        END.
 
-        IF NUM-ENTRIES(arrayTable.c_array, delim) < iip_y THEN RETURN ?.
+        arrayTable.c_array = this:IncreaseEntries(arrayTable.c_array, iip_y).
 
         RETURN ENTRY(iip_y, arrayTable.c_array, delim).
     END METHOD.
@@ -178,7 +191,7 @@ CLASS OOL.CGE.Tetris.MultiDimensionalArray INHERITS System.Object USE-WIDGET-POO
             DO:
                 FOR FIRST arrayTable
                     WHERE arrayTable.i_idx = iip_y:
-                    
+
                     RETURN NUM-ENTRIES(arrayTable.c_array, delim).
                 END.
             END.

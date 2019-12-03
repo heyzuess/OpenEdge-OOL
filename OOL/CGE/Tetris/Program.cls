@@ -32,8 +32,6 @@ USING System.Text.*                FROM ASSEMBLY.
 USING System.Threading.*           FROM ASSEMBLY.
 USING System.Collections.Generic.* FROM ASSEMBLY.
 USING Progress.Util.*              FROM ASSEMBLY.
-
-USING OOL.CGE.*.
 USING OOL.CGE.Tetris.*.
 
 CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
@@ -225,63 +223,26 @@ CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
 
             IF this:Collision(this:State:CurrentFigure) THEN
             DO:
-                Debug:Message("Test 1").
-
                 this:AddCurrentFigure().
-
-                Debug:Message("Test 2").
-
                 this:lines = this:CheckForFullLines().
-                this:lines = this:lines + 1.
-
-                Debug:Message("Test 3").
-
                 this:scoreManager:AddToScore(this:ScorePerLines[this:lines] * this:State:Level).
-                
-                Debug:Message("Test 4").
-
                 this:tempTetromino = CAST(this:TetrisFigures:Item[this:random:Next(0, this:TetrisFigures:Count)], Tetromino).
-                
-                Debug:Message("Test 5").
-
                 this:State:CurrentFigure = this:tempTetromino.
-                
-                Debug:Message("Test 6").
-
                 this:State:CurrentFigureRow = 0.
-                
-                Debug:Message("Test 7").
-
                 this:State:CurrentFigureCol = 0.
 
-                Debug:Message("Test 8").
-                
                 IF this:Collision(this:State:CurrentFigure) THEN
                 DO:
-                    Debug:Message(9).
-                    
                     this:scoreManager:AddToHighScore().
-
-                    Debug:Message(10).
-                    
                     this:tetrisConsoleWriter:DrawAll(this:State, this:scoreManager).
-
-                    Debug:Message(11).
-                    
                     this:tetrisConsoleWriter:WriteGameOver(this:scoreManager:Score).
-
-                    Debug:Message(12).
-
                     Thread:Sleep(100000).
-
-                    Debug:Message(13).
-
                     RETURN.
                 END.
             END.
 
             this:tetrisConsoleWriter:DrawAll(this:State, this:scoreManager).
-            
+
             Thread:Sleep(40).
         END.
     END METHOD.
@@ -290,7 +251,7 @@ CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
         this:linesTemp = 0.
         DO i_i = 1 TO this:State:TetrisField:GetArraySize(1, ?):
             this:rowIsFull = TRUE.
-            
+
             CHECK-BLK:
             DO i_j = 1 TO this:State:TetrisField:GetArraySize(2, 1):
                 IF NOT this:State:TetrisField:GetLogValue(i_i, i_j) THEN
@@ -307,20 +268,22 @@ CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
                     DO i_k = 1 TO this:State:TetrisField:GetArraySize(2, 1):
                         this:State:TetrisField:SetValue(i_j, i_k, this:State:TetrisField:GetLogValue(i_j - 1, i_k)).
                     END.
-                
+
                     i_j = i_j - 1.
+                    IF i_j = 1 THEN LEAVE.
                 END.
 
                 this:linesTemp = this:linesTemp + 1.
             END.
         END.
 
-        RETURN this:linesTemp.
+        RETURN this:linesTemp + 1.
     END METHOD.
 
     METHOD PRIVATE VOID AddCurrentFigure ():
         DO i_i = 1 TO this:State:CurrentFigure:Width:
             DO i_j = 1 TO this:State:CurrentFigure:Height:
+
                 IF this:State:CurrentFigure:Body:GetLogValue(i_i, i_j) THEN
                 DO:
                     this:State:TetrisField:SetValue(this:State:CurrentFigureRow + i_i,
@@ -332,17 +295,9 @@ CLASS OOL.CGE.Tetris.Program USE-WIDGET-POOL:
     END METHOD.
 
     METHOD PRIVATE LOGICAL Collision (INPUT figure AS Tetromino):
-        IF this:State:CurrentFigureCol > this:TetrisCols - figure:Height THEN
-        do:
-            Debug:Message("Return 1").
-            RETURN TRUE.
-        end.
-        
-        IF this:State:CurrentFigureRow + figure:Width = this:TetrisRows THEN
-        do:
-            Debug:Message("Return 2").
-            RETURN TRUE.
-        end.
+        IF this:State:CurrentFigureCol > this:TetrisCols - figure:Height THEN RETURN TRUE.
+
+        IF this:State:CurrentFigureRow + figure:Width = this:TetrisRows  THEN RETURN TRUE.
 
         DO i_i = 1 TO figure:Width:
             DO i_j = 1 TO figure:Height:

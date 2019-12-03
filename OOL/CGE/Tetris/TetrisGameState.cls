@@ -58,7 +58,7 @@ CLASS OOL.CGE.Tetris.TetrisGameState USE-WIDGET-POOL:
         this:CurrentFigureRow = 0.
         this:CurrentFigureCol = 0.
         this:TetrisField = NEW MultiDimensionalArray().
-        
+
         DO i_i = 1 TO tetrisRows:
             DO i_j = 1 TO tetrisColumns:
                 this:TetrisField:SetValue(i_i, i_j, FALSE).
@@ -79,7 +79,7 @@ CLASS OOL.CGE.Tetris.TetrisGameState USE-WIDGET-POOL:
         this:Level = INTEGER(Math:Log10(score)) - 1.
         IF this:Level < 1 THEN
             this:Level = 1.
-        
+
         IF this:Level > 10 THEN
             this:Level = 10.
     END METHOD.

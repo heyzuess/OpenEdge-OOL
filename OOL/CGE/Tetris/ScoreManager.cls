@@ -84,7 +84,7 @@ CLASS OOL.CGE.Tetris.ScoreManager USE-WIDGET-POOL:
 
             DO i_i = 1 TO this:allScores:Length:
                 this:sc = this:allScores:GetValue(i_i - 1).
-                this:match = Regex:Match(this:sc, " => (?<score>[0-9]+").
+                this:match = Regex:Match(this:sc, " => (?<score>[0-9]+)").
                 this:hs = Math:Max(this:hs, INTEGER(this:match:Groups["score"]:Value)).
             END.
         END.
