@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test>
+  <to>Jesse Iberri</to>
+  <from>Myself</from>
+  <heading>This is a test.</heading>
+  <body>This is some more data &amp; testing.</body>
+</test>
